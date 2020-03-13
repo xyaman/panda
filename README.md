@@ -22,7 +22,7 @@ panda = "0.0.1"
 
 # Example usage
 
-```rs
+```rust
 
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
