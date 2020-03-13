@@ -1,0 +1,31 @@
+[package]
+name = "panda"
+version = "0.1.0"
+description = "An async Rust library for Discord"
+authors = ["Diego Barría <dbarriapaiva@gmail.com>"]
+homepage = "https://github.com/xyaman/panda"
+repository = "https://github.com/xyaman/panda"
+readme = "README.md"
+license = "MIT OR Apache-2.0"
+edition = "2018"
+
+[dependencies]
+# Serde dependencies
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+serde_repr = "0.1.5"
+
+# Async
+async-std = { version = "1.5.0", features=["attributes"]}
+
+futures = { version = "0.3.3" }
+async-tungstenite = { version = "0.4.0", features=["async-std-runtime", "async-tls"] }
+
+# Websocket / connection
+# tungstenite, re-exported by async-tungsnite
+flate2 = { version = "1.0.13", features = ["zlib"], default-features = false }
+async-tls = "0.6.0"
+url = "2.1.0"
+
+log = "0.4.8"
+isahc = { version = "0.9", features = ["json"] }
