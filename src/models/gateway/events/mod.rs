@@ -153,11 +153,10 @@ impl TryFrom<Payload> for Event {
             Opcode::Dispatch => Ok(Event::Dispatch(handle_dispatch(p)?)),
             Opcode::Reconnect => Ok(Event::Reconnect),
             Opcode::InvalidSession => {
-                let d =
-                    p.d.ok_or_else(|| DiscordError::InvalidPayloadFormat("INVALID_SESSION"))?;
+                let d = p.d.ok_or_else(|| DiscordError::InvalidPayloadFormat)?;
                 let resumable = match d {
                     Value::Bool(v) => v,
-                    _ => return Err(DiscordError::InvalidPayloadFormat("INVALID_SESSION")),
+                    _ => return Err(DiscordError::InvalidPayloadFormat),
                 };
 
                 Ok(Event::InvalidSession(resumable))
@@ -167,8 +166,7 @@ impl TryFrom<Payload> for Event {
                 struct Hello {
                     heartbeat_interval: u64,
                 }
-                let d =
-                    p.d.ok_or_else(|| DiscordError::InvalidPayloadFormat("HELLO"))?;
+                let d = p.d.ok_or_else(|| DiscordError::InvalidPayloadFormat)?;
                 let hello: Hello = serde_json::from_value(d).unwrap();
 
                 Ok(Event::Hello(hello.heartbeat_interval))
@@ -181,178 +179,145 @@ impl TryFrom<Payload> for Event {
 
 ///
 fn handle_dispatch(p: Payload) -> Result<DispatchEvent> {
-    let d =
-        p.d.ok_or_else(|| DiscordError::InvalidPayloadFormat("DISPATCH"))?;
-    let t =
-        p.t.ok_or_else(|| DiscordError::InvalidPayloadFormat("DISPATCH"))?;
+    let d = p.d.ok_or_else(|| DiscordError::InvalidPayloadFormat)?;
+    let t = p.t.ok_or_else(|| DiscordError::InvalidPayloadFormat)?;
 
     match t.as_str() {
         "READY" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("READY"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::Ready(event))
         }
         "RESUMED" => Ok(DispatchEvent::Resumed),
         "RECONNECT" => Ok(DispatchEvent::Reconnect),
         // Channel
         "CHANNEL_CREATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("CHANNEL_CREATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::ChannelCreate(event))
         }
         "CHANNEL_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("CHANNEL_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::ChannelUpdate(event))
         }
         "CHANNEL_DELETE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("CHANNEL_DELETE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::ChannelDelete(event))
         }
         "CHANNEL_PINS_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("CHANNEL_PINS_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::ChannelPinsUpdate(event))
         }
 
         // Guild
         "GUILD_CREATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_CREATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildCreate(event))
         }
         "GUILD_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildUpdate(event))
         }
         "GUILD_DELETE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_DELETE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildDelete(event))
         }
         "GUILD_BAN_ADD" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_BAN_ADD"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildBanAdd(event))
         }
         "GUILD_BAN_REMOVE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_BAN_REMOVE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildBanRemove(event))
         }
         "GUILD_EMOJIS_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_EMOJIS_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildEmojisUpdate(event))
         }
         "GUILD_INTEGRATIONS_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_INTEGRATIONS_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildIntegrationsUpdate(event))
         }
         "GUILD_MEMBER_ADD" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_MEMBER_ADD"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildMemberAdd(event))
         }
         "GUILD_MEMBER_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_MEMBER_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildMemberUpdate(event))
         }
         "GUILD_MEMBER_REMOVE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_MEMBER_REMOVE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildMemberRemove(event))
         }
         "GUILD_MEMBER_CHUNK" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_MEMBER_CHUNK"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildMembersChunk(event))
         }
         "GUILD_ROLE_CREATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_ROLE_CREATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildRoleCreate(event))
         }
         "GUILD_ROLE_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_ROLE_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildRoleUpdate(event))
         }
         "GUILD_ROLE_DELETE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("GUILD_ROLE_DELETE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::GuildRoleDelete(event))
         }
 
         // Message
         "MESSAGE_CREATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("MESSAGE_CREATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::MessageCreate(event))
         }
         "MESSAGE_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("MESSAGE_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::MessageUpdate(event))
         }
         "MESSAGE_DELETE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("MESSAGE_DELETE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::MessageDelete(event))
         }
         "MESSAGE_DELETE_BULK" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("MESSAGE_DELETE_BULK"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::MessageDeleteBulk(event))
         }
         "MESSAGE_REACTION_ADD" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("MESSAGE_REACTION_ADD"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::MessageReactionAdd(event))
         }
         "MESSAGE_REACTION_REMOVE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("MESSAGE_REACTION_REMOVE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::MessageReactionRemove(event))
         }
         "MESSAGE_REACTION_REMOVE_ALL" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("MESSAGE_REACTION_REMOVE_ALL"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::MessageReactionRemoveAll(event))
         }
 
         // Presence
         "PRESENCE_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("PRESENCE_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::PresenceUpdate(event))
         }
         "TYPING_START" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("TYPING_START"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::TypingStart(event))
         }
         "USER_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("USER_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::UserUpdate(event))
         }
 
         // Voice
         "VOICE_STATE_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("VOICE_STATE_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::VoiceStateUpdate(event))
         }
         "VOICE_SERVER_UPDATE" => {
-            let event = serde_json::from_value(d)
-                .map_err(|_| DiscordError::InvalidPayloadFormat("VOICE_SERVER_UPDATE"))?;
+            let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::VoiceServerUpdate(event))
         }
-        _ => Err(DiscordError::InvalidPayloadFormat("UNKNOWN")),
+        _ => Err(DiscordError::InvalidPayloadFormat),
     }
 }

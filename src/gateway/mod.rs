@@ -55,7 +55,7 @@ impl GatewayConnection {
         let event = from_gateway
             .next()
             .await
-            .ok_or_else(|| DiscordError::ConnectionError)?;
+            .ok_or_else(|| DiscordError::ConnectionClosed)?;
 
         let heartbeat_interval = match event {
             Event::Hello(v) => v,
@@ -84,15 +84,15 @@ impl GatewayConnection {
         };
 
         loop {
-            println!("Trying to reconnect");
+            log::error!("Disconnected from the gateway, starting reconnect...");
             match GatewayConnection::new().await {
                 Ok(g) => {
                     std::mem::replace(self, g);
-                    println!("ok");
+                    log::info!("Connected succesfully");
                     break;
                 }
                 Err(e) => {
-                    println!("{}", e);
+                    log::error!("Couldn't reconnect, trying in 3 seconds...");
                     task::sleep(Duration::from_secs(3)).await;
                 }
             }

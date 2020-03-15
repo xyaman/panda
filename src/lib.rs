@@ -2,7 +2,7 @@
 //!
 //! Discord it's a very simple and friendly discord api library
 //!
-//! #Features
+//! # Features
 //! - __Fast__
 //! - __Simple__
 
@@ -13,7 +13,9 @@
 pub mod client;
 #[doc(inline)]
 pub mod error;
+#[doc(inline)]
 pub mod models;
+#[doc(inline)]
 pub mod utils;
 
 mod gateway;

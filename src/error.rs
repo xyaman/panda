@@ -1,6 +1,7 @@
 //! # "Discord" error types
 //! TODO: ADD DISCORD LINKS
 
+use async_tungstenite::tungstenite::Error as TungsteniteError;
 use std::{error::Error, fmt, result::Result as StdResult};
 
 /// This library use a shared result type, because all functions returns the same error type
@@ -19,13 +20,19 @@ pub enum DiscordError {
     CantConnectToGateway,
 
     /// Returned when the gateway connection is unexpected closed
-    ConnectionError,
+    ConnectionClosed,
 
     /// Returned when "discord" receives a unknown message format
     UnknownPayloadReceived,
 
+    /// Returned when panda sent an invalid Opcode
+    UnknownOpcodeSent,
+
+    /// Returned when panda sent an invalid payload
+    InvalidDecodeSent,
+
     /// Returned when "discord" recevies a invalid message format
-    InvalidPayloadFormat(&'static str),
+    InvalidPayloadFormat,
 
     /// Returned when "discord" receives a unexpected message format like IDENTIFY
     UnexpectedPayloadReceived,
@@ -53,16 +60,31 @@ pub enum DiscordError {
 
     /// Returned when the gateway couldn't close the connection succesfully
     UnsuccessfulConnectionClose,
+
+    /// Returned when you send an invalid shard
+    InvalidShard,
+
+    /// Returned when you handled too many guilds, and shard is necessary
+    ShardingRequired,
+
+    // Invalid API version (gateway)
+    InvalidApiGatewayVersion,
+
+    /// serde_json
+    SerdeError(serde_json::Error),
+
+    /// tungstenite
+    TungsteniteError(TungsteniteError),
 }
 
 impl fmt::Display for DiscordError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match &self {
+        match self {
             Self::AuthenticationFailed => write!(f, "Authentication failed"),
             Self::CantConnectToGateway => write!(f, "'Discord' couldn't connect to gateway"),
-            Self::ConnectionError => write!(f, "Connection closed unexpectedly"),
+            Self::ConnectionClosed => write!(f, "Connection closed unexpectedly"),
             Self::UnknownPayloadReceived => write!(f, "Unknown payload format received"),
-            Self::InvalidPayloadFormat(p) => write!(f, "Invalid payload format received({})", p),
+            Self::InvalidPayloadFormat => write!(f, "Invalid payload format received",),
             Self::UnexpectedPayloadReceived => write!(f, "Unexpected payload received"),
             Self::WrongCompression => write!(f, "Wrong zlib compression"),
             Self::HttpNoResponse => write!(f, "Discord HTTP API didn't response"),
@@ -70,11 +92,40 @@ impl fmt::Display for DiscordError {
             Self::HttpUnauthorized => write!(f, "The client token is invalid"),
             Self::HttpForbidden => write!(f, "The client did not have permission to the resource"),
             Self::HttpInvalidParameters => write!(f, "The request had invalid parameters"),
-            Self::UnsuccessfulConnectionClose => {
-                write!(f, "The gateway couldn't close succesfully the connection")
-            }
+            Self::UnsuccessfulConnectionClose => write!(f, "The gateway couldn't close succesfully the connection"),
+            Self::InvalidShard => write!(f, "You sent an invalid shard"),
+            Self::ShardingRequired => write!(f, "The session would have handled too many guilds - you are required to shard your connection in order to connect."),
+            Self::InvalidApiGatewayVersion => write!(f, "panda needs to update the gateway version"),
+            Self::SerdeError(e) => write!(f, "Serde Error: {}", e),
+            Self::TungsteniteError(e) => write!(f, "Tungstenite Error: {}", e),
+            Self::UnknownOpcodeSent => write!(f, "panda sent an invalid Opcode, please report the bug"),
+            Self::InvalidDecodeSent => write!(f, "panda sent an invalid payload, please report the bug"),
         }
     }
 }
 
 impl Error for DiscordError {}
+
+// Error parsing
+impl From<serde_json::Error> for DiscordError {
+    fn from(error: serde_json::Error) -> Self {
+        // InvalidPayloadFormat
+
+        if error.is_data() {
+            return DiscordError::InvalidPayloadFormat;
+        }
+
+        DiscordError::SerdeError(error)
+    }
+}
+
+impl From<TungsteniteError> for DiscordError {
+    fn from(error: TungsteniteError) -> Self {
+        // TODO: Improve this (IO) errors
+
+        match error {
+            TungsteniteError::ConnectionClosed => DiscordError::ConnectionClosed,
+            _ => DiscordError::TungsteniteError(error),
+        }
+    }
+}

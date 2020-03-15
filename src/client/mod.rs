@@ -199,21 +199,21 @@ impl Client {
                         self.session.set_resumable(resumable);
                     }
                     Event::HeartbeatACK => log::info!("HeartbeatACK received"),
-                    Event::Close(e) => {
-                        log::error!("Event CLOSE, reason: {}", e);
+                    Event::Close(error) => {
+                        log::error!("Error detected {}", error);
 
                         // Return if there are unrecoverable errors
-                        match e {
-                            DiscordError::AuthenticationFailed => return Err(e),
-                            v => {
-                                log::error!("{}", v);
-                            } // TODO: Remove this
-                        };
-
+                        match &error {
+                            DiscordError::AuthenticationFailed
+                            | DiscordError::InvalidApiGatewayVersion
+                            | DiscordError::InvalidShard
+                            | DiscordError::ShardingRequired => return Err(error),
+                            _ => {}
+                        }
                         // If there was a recoverable error, try to reconnect
                         self.reconnect().await;
                     }
-                    e => log::info!("Unhandled event received: {:?}", e),
+                    event => log::info!("Unhandled event received: {:?}", event),
                 };
             }
         }
@@ -225,10 +225,7 @@ impl Client {
     async fn reconnect(&mut self) {
         // Close channels
         if let Err(e) = self.gateway.close_channels() {
-            log::error!(
-                "Error when trying to close gateway channels at reconnect: {}",
-                e
-            );
+            log::error!("Error when trying to close gateway channels at reconnect: {}", e);
         };
 
         // Reconnect and get last sequence received, needed to send a RESUME command

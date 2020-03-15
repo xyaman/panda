@@ -1,4 +1,11 @@
-<h1 align=center>panda</h1>
+<h1 align="center">panda</h1>
+<br />
+<div align="center">
+    <!-- Crates version -->
+    <a href="https://crates.io/crates/panda">
+    <img src="https://img.shields.io/crates/v/panda?style=flat-square">
+    </a>
+</div>
 
 A powerful async Rust library for interacting with Discord's API
 
@@ -17,7 +24,7 @@ cargo add panda
 or in `Cargo.toml`
 
 ```
-panda = "0.0.1"
+panda = "0.1.0"
 ```
 
 # Example usage

@@ -32,10 +32,8 @@ use async_tungstenite::{
 use log::error;
 
 // Websocket types
-type WebSocketSender = futures::stream::SplitSink<
-    WebSocketStream<Stream<TcpStream, TlsStream<TcpStream>>>,
-    TungsteniteMessage,
->;
+type WebSocketSender =
+    futures::stream::SplitSink<WebSocketStream<Stream<TcpStream, TlsStream<TcpStream>>>, TungsteniteMessage>;
 type WebSocket = WebSocketStream<Stream<TcpStream, TlsStream<TcpStream>>>;
 type TungsteniteOptionResult = Option<StdResult<TungsteniteMessage, TungsteniteError>>;
 
@@ -60,7 +58,7 @@ pub(crate) async fn gateway_process(
                     error!("Error when receiving an event: {}", e);
                     // Check if there are unrecoverable errors
                     match e {
-                        DiscordError::AuthenticationFailed | DiscordError::ConnectionError => {
+                        DiscordError::AuthenticationFailed | DiscordError::ConnectionClosed => {
                             to_client.send(Event::Close(e)).await.expect("EVENT CLOSE");
                             break;
                         },
@@ -75,7 +73,7 @@ pub(crate) async fn gateway_process(
                 if let Err(e) = to_gateway_process(cmd, &mut ws_sender, last_sequence).await {
                     error!("Error when sending command to gateway: {}", e);
                     // Unhandled result, TODO: Handle result
-                    to_client.send(Event::Close(DiscordError::ConnectionError)).await;
+                    to_client.send(Event::Close(DiscordError::ConnectionClosed)).await;
                     break;
                 }
             }
@@ -92,8 +90,8 @@ async fn from_gateway_process(
     last_sequence: Arc<AtomicU64>,
 ) -> Result<()> {
     // This error means connection error
-    let tm = tm.ok_or_else(|| DiscordError::ConnectionError)?;
-    let msg = tm.map_err(|_| DiscordError::ConnectionError)?;
+    let tm = tm.ok_or_else(|| DiscordError::ConnectionClosed)?;
+    let msg = tm?;
 
     // Get Payload from TungsteniteMessage
     let p = Payload::try_from(msg)?;
@@ -110,7 +108,7 @@ async fn from_gateway_process(
     to_client
         .send(event)
         .await
-        .map_err(|_| DiscordError::ConnectionError)?;
+        .map_err(|_| DiscordError::ConnectionClosed)?;
 
     Ok(())
 }
@@ -122,14 +120,14 @@ async fn to_gateway_process(
     last_sequence: Arc<AtomicU64>,
 ) -> Result<()> {
     // Get the command
-    let command = command.ok_or_else(|| DiscordError::ConnectionError)?;
+    let command = command.ok_or_else(|| DiscordError::ConnectionClosed)?;
 
     // Check if it's a Close command
     if command == Command::Close {
         return to_gateway
             .send(TungsteniteMessage::Close(None))
             .await
-            .map_err(|_| DiscordError::ConnectionError);
+            .map_err(|_| DiscordError::ConnectionClosed);
     }
 
     // Get the last sequence
@@ -142,10 +140,7 @@ async fn to_gateway_process(
     let tm = command.to_tungstenite_message(seq);
 
     // Send command to gateway
-    to_gateway
-        .send(tm)
-        .await
-        .map_err(|_| DiscordError::ConnectionError)?;
+    to_gateway.send(tm).await.map_err(|_| DiscordError::ConnectionClosed)?;
 
     Ok(())
 }
