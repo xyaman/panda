@@ -2,6 +2,7 @@
 name = "panda"
 version = "0.1.0"
 description = "An async Rust library for Discord"
+keywords = ["async", "async-std", "discord"]
 authors = ["Diego Barría <dbarriapaiva@gmail.com>"]
 homepage = "https://github.com/xyaman/panda"
 repository = "https://github.com/xyaman/panda"

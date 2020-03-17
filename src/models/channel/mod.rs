@@ -1,7 +1,9 @@
+mod embed;
 mod message;
 mod overwrite;
 
 // Re-exports
+pub use embed::{Embed, EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedProvider, EmbedThumbnail, EmbedVideo};
 pub use message::Message;
 pub use overwrite::Overwrite;
 

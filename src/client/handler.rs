@@ -2,7 +2,7 @@
 use super::session::Session;
 use crate::models::gateway::events::*;
 
-use std::default::Default;
+use std::{default::Default, error::Error};
 
 // async
 use async_std::sync::Arc;
@@ -10,60 +10,53 @@ use async_std::sync::Arc;
 // Futures
 use futures::future::BoxFuture;
 
+pub(crate) type EventResult = Result<(), Box<dyn Error>>;
+
+/// Helper macro to create futures function trait
+macro_rules! event_trait {
+    ($event: tt) => {
+        dyn Fn(Arc<Session>, $event) -> BoxFuture<'static, EventResult> + Send + Sync
+    };
+}
+
 // READY function trait
-type ReadyFn = dyn Fn(Arc<Session>, Ready) -> BoxFuture<'static, ()> + Send + Sync;
+type ReadyFn = event_trait!(Ready);
 
 // CHANNEL functions trait
-type ChannelCreateFn = dyn Fn(Arc<Session>, ChannelCreate) -> BoxFuture<'static, ()> + Send + Sync;
-type ChannelUpdateFn = dyn Fn(Arc<Session>, ChannelUpdate) -> BoxFuture<'static, ()> + Send + Sync;
-type ChannelDeleteFn = dyn Fn(Arc<Session>, ChannelDelete) -> BoxFuture<'static, ()> + Send + Sync;
-type ChannelPinsUpdateFn =
-    dyn Fn(Arc<Session>, ChannelPinsUpdate) -> BoxFuture<'static, ()> + Send + Sync;
+type ChannelCreateFn = event_trait!(ChannelCreate);
+type ChannelUpdateFn = event_trait!(ChannelUpdate);
+type ChannelDeleteFn = event_trait!(ChannelDelete);
+type ChannelPinsUpdateFn = event_trait!(ChannelPinsUpdate);
 
 // GUILD functions trait
-type GuildCreateFn = dyn Fn(Arc<Session>, GuildCreate) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildUpdateFn = dyn Fn(Arc<Session>, GuildUpdate) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildDeleteFn = dyn Fn(Arc<Session>, GuildDelete) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildBanAddFn = dyn Fn(Arc<Session>, GuildBanAdd) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildBanRemoveFn =
-    dyn Fn(Arc<Session>, GuildBanRemove) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildEmojisUpdateFn =
-    dyn Fn(Arc<Session>, GuildEmojisUpdate) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildIntegrationsUpdateFn =
-    dyn Fn(Arc<Session>, GuildIntegrationsUpdate) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildMemberAddFn =
-    dyn Fn(Arc<Session>, GuildMemberAdd) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildMemberUpdateFn =
-    dyn Fn(Arc<Session>, GuildMemberUpdate) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildMemberRemoveFn =
-    dyn Fn(Arc<Session>, GuildMemberRemove) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildMembersChunkFn =
-    dyn Fn(Arc<Session>, GuildMembersChunk) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildRoleCreateFn =
-    dyn Fn(Arc<Session>, GuildRoleCreate) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildRoleUpdateFn =
-    dyn Fn(Arc<Session>, GuildRoleUpdate) -> BoxFuture<'static, ()> + Send + Sync;
-type GuildRoleDeleteFn =
-    dyn Fn(Arc<Session>, GuildRoleDelete) -> BoxFuture<'static, ()> + Send + Sync;
+type GuildCreateFn = event_trait!(GuildCreate);
+type GuildUpdateFn = event_trait!(GuildUpdate);
+type GuildDeleteFn = event_trait!(GuildDelete);
+type GuildBanAddFn = event_trait!(GuildBanAdd);
+type GuildBanRemoveFn = event_trait!(GuildBanRemove);
+type GuildEmojisUpdateFn = event_trait!(GuildEmojisUpdate);
+type GuildIntegrationsUpdateFn = event_trait!(GuildIntegrationsUpdate);
+type GuildMemberAddFn = event_trait!(GuildMemberAdd);
+type GuildMemberUpdateFn = event_trait!(GuildMemberUpdate);
+type GuildMemberRemoveFn = event_trait!(GuildMemberRemove);
+type GuildMembersChunkFn = event_trait!(GuildMembersChunk);
+type GuildRoleCreateFn = event_trait!(GuildRoleCreate);
+type GuildRoleUpdateFn = event_trait!(GuildRoleUpdate);
+type GuildRoleDeleteFn = event_trait!(GuildRoleDelete);
 
 // MESSAGE functions trait
-type MessageCreateFn = dyn Fn(Arc<Session>, MessageCreate) -> BoxFuture<'static, ()> + Send + Sync;
-type MessageUpdateFn = dyn Fn(Arc<Session>, MessageUpdate) -> BoxFuture<'static, ()> + Send + Sync;
-type MessageDeleteFn = dyn Fn(Arc<Session>, MessageDelete) -> BoxFuture<'static, ()> + Send + Sync;
-type MessageDeleteBulkFn =
-    dyn Fn(Arc<Session>, MessageDeleteBulk) -> BoxFuture<'static, ()> + Send + Sync;
-type MessageReactionAddFn =
-    dyn Fn(Arc<Session>, MessageReactionAdd) -> BoxFuture<'static, ()> + Send + Sync;
-type MessageReactionRemoveFn =
-    dyn Fn(Arc<Session>, MessageReactionRemove) -> BoxFuture<'static, ()> + Send + Sync;
-type MessageReactionRemoveAllFn =
-    dyn Fn(Arc<Session>, MessageReactionRemoveAll) -> BoxFuture<'static, ()> + Send + Sync;
+type MessageCreateFn = event_trait!(MessageCreate);
+type MessageUpdateFn = event_trait!(MessageUpdate);
+type MessageDeleteFn = event_trait!(MessageDelete);
+type MessageDeleteBulkFn = event_trait!(MessageDeleteBulk);
+type MessageReactionAddFn = event_trait!(MessageReactionAdd);
+type MessageReactionRemoveFn = event_trait!(MessageReactionRemove);
+type MessageReactionRemoveAllFn = event_trait!(MessageReactionRemoveAll);
 
 // Presence functions trait
-type PresenceUpdateFn =
-    dyn Fn(Arc<Session>, PresenceUpdate) -> BoxFuture<'static, ()> + Send + Sync;
-type TypingStartFn = dyn Fn(Arc<Session>, TypingStart) -> BoxFuture<'static, ()> + Send + Sync;
-type UserUpdateFn = dyn Fn(Arc<Session>, UserUpdate) -> BoxFuture<'static, ()> + Send + Sync;
+type PresenceUpdateFn = event_trait!(PresenceUpdate);
+type TypingStartFn = event_trait!(TypingStart);
+type UserUpdateFn = event_trait!(UserUpdate);
 
 type OptionBox<T> = Option<Box<T>>;
 

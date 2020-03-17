@@ -91,7 +91,7 @@ impl GatewayConnection {
                     log::info!("Connected succesfully");
                     break;
                 }
-                Err(e) => {
+                Err(_e) => {
                     log::error!("Couldn't reconnect, trying in 3 seconds...");
                     task::sleep(Duration::from_secs(3)).await;
                 }

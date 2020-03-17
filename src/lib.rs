@@ -1,12 +1,18 @@
+#![doc(
+    html_logo_url = "https://i.postimg.cc/3rGyjPqQ/logo.png",
+    html_favicon_url = "https://i.postimg.cc/3rGyjPqQ/logo.png"
+)]
 //! # Async Discord Library
 //!
-//! Discord it's a very simple and friendly discord api library
+//! Panda it's a very simple and friendly discord api library
 //!
 //! # Features
 //! - __Fast__
 //! - __Simple__
+//!
 
 //#![deny(missing_docs)]
+// Used by futures::select!
 #![recursion_limit = "1024"]
 // Modules
 #[doc(inline)]
@@ -26,7 +32,7 @@ pub use models::gateway::events;
 
 // Shortcut functions
 
-/// Creates a new panda Client
+/// Create a new panda Client with the default configs
 pub async fn new(token: impl Into<String>) -> error::Result<client::Client> {
     client::Client::new(token).await
 }

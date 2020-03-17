@@ -1,11 +1,18 @@
-<h1 align="center">panda</h1>
-<br />
+<div align="center">
+    <img src="https://i.postimg.cc/RhwNMHtZ/banner.png" />
+</div>
+<hr />
 <div align="center">
     <!-- Crates version -->
     <a href="https://crates.io/crates/panda">
-    <img src="https://img.shields.io/crates/v/panda?style=flat-square">
+        <img src="https://img.shields.io/crates/v/panda?style=flat-square">
+    </a>
+    <!-- docs.rs -->
+    <a href="https://docs.rs/panda">
+        <img src="https://img.shields.io/badge/docs-online-blue?style=flat-square" />
     </a>
 </div>
+<br />
 
 A powerful async Rust library for interacting with Discord's API
 
@@ -15,7 +22,7 @@ Even thought this library is usable, it still under development, so don't use fo
 
 # Installation
 
-`panda` supports a minimum of Rust 1.4.1
+`panda` supports a minimum of Rust 1.41
 
 ```
 cargo add panda
@@ -30,7 +37,6 @@ panda = "0.1.0"
 # Example usage
 
 ```rust
-
 #[async_std::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
@@ -38,8 +44,21 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     client.on_ready(|s, ready| async move {
         println!("Bot {} is ready", ready.user().username());
+
+        Ok(())
     });
 
     client.start().await?;
+
+    Ok(())
 }
 ```
+
+# TODO list
+
+- Add config options.
+- Finish http requests.
+- Improve panda error.
+- Add Client state.
+- Add voice support.
+- Improve documentation.

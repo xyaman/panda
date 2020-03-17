@@ -28,26 +28,36 @@ macro_rules! handle_event {
     ($client: ident, $kind: ident, $event: expr) => {
         if let Some(func) = &($client).handler.$kind {
             let session = $client.session.clone();
-            task::spawn(func(session, $event));
+            let future = func(session, $event);
+            task::spawn(async move {
+                if let Err(e) = future.await {
+                    // TODO: Add display and event name
+                    log::error!("Handler error: {:?}", e);
+                };
+            });
+            // task::spawn(future);
         }
     };
 }
 
 /// This macro it's used to create all "on_EVENT" methods to add a event handler
-macro_rules! on_event_fn {
-    ($(#[$doc: meta])* $name: ident, $event: ident, $event_enum: ty) => {
-        $(#[$doc])*
-        pub fn $name<F, Fut>(&mut self, func: F)
-        where
-            F: Fn(Arc<Session>, $event_enum) -> Fut + Sync + Send + 'static,
-            Fut: Future<Output=()> + Send + 'static
-        {
-            self.handler.$event = Some(Box::new(move |m, r| func(m, r).boxed() ))
-        }
+macro_rules! impl_on_event_fn {
+    ($( $(#[$meta: meta])* pub fn $fn_name: ident($event_name: ident, $event: ty) ); *) => {
+
+        $(
+            $(#[$meta])*
+            pub fn $fn_name<F, Fut>(&mut self, func: F)
+            where
+                F: Fn(Arc<Session>, $event) -> Fut + Sync + Send + 'static,
+                Fut: Future<Output=handler::EventResult> + Send + 'static
+            {
+                self.handler.$event_name = Some(Box::new(move |m, r| func(m, r).boxed() ))
+            }
+        )*
     };
 }
 
-/// Client it's the main struct of Discord library, it receives and handle all discord events
+/// Client it's the main struct of Panda library, it receives and handle all discord events
 pub struct Client {
     handler: EventHandler,
     config: Config,
@@ -58,7 +68,7 @@ pub struct Client {
 }
 
 impl Client {
-    /// Create a new "discord" Client with the default configs
+    /// Create a new Panda Client with the default configs
     pub async fn new(token: impl Into<String>) -> Result<Self> {
         // Create a new gateway connection
         let gateway = GatewayConnection::new().await?;
@@ -79,7 +89,9 @@ impl Client {
     }
 
     /// Create a new "discord" Client with personalized configs
-    pub fn new_with_config() {}
+    pub fn new_with_config() {
+        unimplemented!()
+    }
 
     /// Start the bot connection process
     pub async fn start(&mut self) -> Result<()> {
@@ -292,309 +304,173 @@ impl Client {
         });
     }
 
-    // on_ready
-    on_event_fn!(
+    impl_on_event_fn! {
         /// Set the handler function for [`Ready`] event
         ///
         /// [`Ready`]: ../models/gateway/events/struct.Ready.html
-        on_ready,
-        ready,
-        Ready
-    );
+        pub fn on_ready(ready, Ready);
 
-    // *******************************************************************************
-    // * CHANNEL METHODS
-    // *******************************************************************************
 
-    // on_channel_create
-    on_event_fn!(
+        // *******************************************************************************
+        // * CHANNEL METHODS
+        // *******************************************************************************
+
+
         /// Set the handler function for [`ChannelCreate`] event
         ///
         /// [`ChannelCreate`]: ../models/gateway/events/struct.ChannelCreate.html
-        on_channel_create,
-        channel_create,
-        ChannelCreate
-    );
+        pub fn on_channel_create(channel_create, ChannelCreate);
 
-    // on_channel_update
-    on_event_fn!(
         /// Set the handler function for [`ChannelUpdate`] event
         ///
         /// [`ChannelUpdate`]: ../models/gateway/events/struct.ChannelUpdate.html
-        on_channel_update,
-        channel_update,
-        ChannelUpdate
-    );
+        pub fn on_channel_update(channel_update, ChannelUpdate);
 
-    // on_channel_delete
-    on_event_fn!(
         /// Set the handler function for [`ChannelDelete`] event
         ///
         /// [`ChannelDelete`]: ../models/gateway/events/struct.ChannelDelete.html
-        on_channel_delete,
-        channel_delete,
-        ChannelDelete
-    );
+        pub fn on_channel_delete(channel_delete, ChannelDelete);
 
-    // on_channel_pins_update
-    on_event_fn!(
         /// Set the handler function for [`ChannelPinsUpdate`] event
         ///
         /// [`ChannelPinsUpdate`]: ../models/gateway/events/struct.ChannelPinsUpdate.html
-        on_channel_pins_update,
-        channel_pins_update,
-        ChannelPinsUpdate
-    );
+        pub fn on_channel_pins_update(channel_pins_update, ChannelPinsUpdate);
 
-    // *******************************************************************************
-    // * GUILD METHODS
-    // *******************************************************************************
 
-    // on_guild_create
-    on_event_fn!(
+        // *******************************************************************************
+        // * GUILD METHODS
+        // *******************************************************************************
+
+
         /// Set the handler function for [`GuildCreate`] event
         ///
         /// [`GuildCreate`]: ../models/gateway/events/struct.GuildCreate.html
-        on_guild_create,
-        guild_create,
-        GuildCreate
-    );
+        pub fn on_guild_create(guild_create, GuildCreate);
 
-    // on_guild_update
-    on_event_fn!(
         /// Set the handler function for [`GuildUpdate`] event
         ///
         /// [`GuildUpdate`]: ../models/gateway/events/struct.GuildUpdate.html
-        on_guild_update,
-        guild_update,
-        GuildUpdate
-    );
+        pub fn on_guild_update(guild_update, GuildUpdate);
 
-    // on_guild_delete
-    on_event_fn!(
         /// Set the handler function for [`GuildDelete`] event
         ///
         /// [`GuildDelete`]: ../models/gateway/events/struct.GuildDelete.html
-        on_guild_delete,
-        guild_delete,
-        GuildDelete
-    );
+        pub fn on_guild_delete(guild_delete, GuildDelete);
 
-    // on_guild_ban_add
-    on_event_fn!(
         /// Set the handler function for [`GuildBanAdd`] event
         ///
         /// [`GuildBanAdd`]: ../models/gateway/events/struct.GuildBanAdd.html
-        on_guild_ban_add,
-        guild_ban_add,
-        GuildBanAdd
-    );
+        pub fn on_guild_ban_add(guild_ban_add, GuildBanAdd);
 
-    // on_guild_ban_remove
-    on_event_fn!(
         /// Set the handler function for [`GuildBanRemove`] event
         ///
         /// [`GuildBanRemove`]: ../models/gateway/events/struct.GuildBanRemove.html
-        on_guild_ban_remove,
-        guild_ban_remove,
-        GuildBanRemove
-    );
+        pub fn on_guild_ban_remove(guild_ban_remove, GuildBanRemove);
 
-    // on_guild_emojis_update
-    on_event_fn!(
         /// Set the handler function for [`GuildEmojisUpdate`] event
         ///
         /// [`GuildEmojisUpdate`]: ../models/gateway/events/struct.GuildEmojisUpdate.html
-        on_guild_emojis_update,
-        guild_emojis_update,
-        GuildEmojisUpdate
-    );
+        pub fn on_guild_emojis_update(guild_emojis_update, GuildEmojisUpdate);
 
-    // on_guild_integrations_update
-    on_event_fn!(
         /// Set the handler function for [`GuildIntegrationsUpdate`] event
         ///
         /// [`GuildIntegrationsUpdate`]: ../models/gateway/events/struct.GuildIntegrationsUpdate.html
-        on_guild_integrations_update,
-        guild_integrations_update,
-        GuildIntegrationsUpdate
-    );
+        pub fn on_guild_integrations_update(guild_integrations_update, GuildIntegrationsUpdate);
 
-    // on_guild_member_add
-    on_event_fn!(
         /// Set the handler function for [`GuildMemberAdd`] event
         ///
         /// [`GuildMemberAdd`]: ../models/gateway/events/struct.GuildMemberAdd.html
-        on_guild_member_add,
-        guild_member_add,
-        GuildMemberAdd
-    );
+        pub fn on_guild_member_add(guild_member_add, GuildMemberAdd);
 
-    // on_guild_member_update
-    on_event_fn!(
         /// Set the handler function for [`GuildMemberUpdate`] event
         ///
         /// [`GuildMemberUpdate`]: ../models/gateway/events/struct.GuildMemberUpdate.html
-        on_guild_member_update,
-        guild_member_update,
-        GuildMemberUpdate
-    );
+        pub fn on_guild_member_update(guild_member_update, GuildMemberUpdate);
 
-    // on_guild_member_remove
-    on_event_fn!(
         /// Set the handler function for [`GuildMemberRemove`] event
         ///
         /// [`GuildMemberRemove`]: ../models/gateway/events/struct.GuildMemberRemove.html
-        on_guild_member_remove,
-        guild_member_remove,
-        GuildMemberRemove
-    );
+        pub fn on_guild_member_remove(guild_member_remove, GuildMemberRemove);
 
-    // on_guild_members_chunk
-    on_event_fn!(
         /// Set the handler function for [`GuildMembersChunk`] event
         ///
         /// [`GuildMembersChunk`]: ../models/gateway/events/struct.GuildMembersChunk.html
-        on_guild_members_chunk,
-        guild_members_chunk,
-        GuildMembersChunk
-    );
+        pub fn on_guild_members_chunk(guild_members_chunk, GuildMembersChunk);
 
-    // on_guild_role_create
-    on_event_fn!(
         /// Set the handler function for [`GuildRoleCreate`] event
         ///
         /// [`GuildRoleCreate`]: ../models/gateway/events/struct.GuildRoleCreate.html
-        on_guild_role_create,
-        guild_role_create,
-        GuildRoleCreate
-    );
+        pub fn on_guild_role_create(guild_role_create, GuildRoleCreate);
 
-    // on_guild_role_update
-    on_event_fn!(
         /// Set the handler function for [`GuildRoleUpdate`] event
         ///
         /// [`GuildRoleUpdate`]: ../models/gateway/events/struct.GuildRoleUpdate.html
-        on_guild_role_update,
-        guild_role_update,
-        GuildRoleUpdate
-    );
+        pub fn on_guild_role_update(guild_role_update, GuildRoleUpdate);
 
-    // on_guild_role_delete
-    on_event_fn!(
         /// Set the handler function for [`GuildRoleDelete`] event
         ///
         /// [`GuildRoleDelete`]: ../models/gateway/events/struct.GuildRoleDelete.html
-        on_guild_role_delete,
-        guild_role_delete,
-        GuildRoleDelete
-    );
+        pub fn on_guild_role_delete(guild_role_delete, GuildRoleDelete);
 
-    // *******************************************************************************
-    // * MESSAGE METHODS
-    // *******************************************************************************
 
-    // on_message_create
-    on_event_fn!(
+        // *******************************************************************************
+        // * MESSAGE METHODS
+        // *******************************************************************************
+
+
         /// Set the handler function for [`MessageCreate`] event
         ///
         /// [`MessageCreate`]: ../models/gateway/events/struct.MessageCreate.html
-        on_message_create,
-        message_create,
-        MessageCreate
-    );
+        pub fn on_message_create(message_create, MessageCreate);
 
-    // on_message_update
-    on_event_fn!(
         /// Set the handler function for [`MessageUpdate`] event
         ///
         /// [`MessageUpdate`]: ../models/gateway/events/struct.MessageUpdate.html
-        on_message_update,
-        message_update,
-        MessageUpdate
-    );
+        pub fn on_message_update(message_update, MessageUpdate);
 
-    // on_message_delete
-    on_event_fn!(
         /// Set the handler function for [`MessageDelete`] event
         ///
         /// [`MessageDelete`]: ../models/gateway/events/struct.MessageDelete.html
-        on_message_delete,
-        message_delete,
-        MessageDelete
-    );
+        pub fn on_message_delete(message_delete, MessageDelete);
 
-    // on_message_delete_bulk
-    on_event_fn!(
         /// Set the handler function for [`MessageDeleteBulk`] event
         ///
         /// [`MessageDeleteBulk`]: ../models/gateway/events/struct.MessageDeleteBulk.html
-        on_message_delete_bulk,
-        message_delete_bulk,
-        MessageDeleteBulk
-    );
+        pub fn on_message_delete_bulk(message_delete, MessageDelete);
 
-    // on_message_reaction_add
-    on_event_fn!(
         /// Set the handler function for [`MessageReactionAdd`] event
         ///
         /// [`MessageReactionAdd`]: ../models/gateway/events/struct.MessageReactionAdd.html
-        on_message_reaction_add,
-        message_reaction_add,
-        MessageReactionAdd
-    );
+        pub fn on_message_reaction_add(message_reaction_add, MessageReactionAdd);
 
-    // on_message_reaction_remove
-    on_event_fn!(
         /// Set the handler function for [`MessageReactionRemove`] event
         ///
         /// [`MessageReactionRemove`]: ../models/gateway/events/struct.MessageReactionRemove.html
-        on_message_reaction_remove,
-        message_reaction_remove,
-        MessageReactionRemove
-    );
+        pub fn on_message_reaction_remove(message_reaction_remove, MessageReactionRemove);
 
-    // on_message_reaction_remove_all
-    on_event_fn!(
         /// Set the handler function for [`MessageReactionRemoveAll`] event
         ///
         /// [`MessageReactionRemoveAll`]: ../models/gateway/events/struct.MessageReactionRemoveAll.html
-        on_message_reaction_remove_all,
-        message_reaction_remove_all,
-        MessageReactionRemoveAll
-    );
+        pub fn on_message_reaction_remove_all(message_reaction_remove_all, MessageReactionRemoveAll);
 
-    // *******************************************************************************
-    // * PRESENCE METHODS
-    // *******************************************************************************
+        // *******************************************************************************
+        // * PRESENCE METHODS
+        // *******************************************************************************
 
-    // on_presence_update
-    on_event_fn!(
+
         /// Set the handler function for [`PresenceUpdate`] event
         ///
         /// [`PresenceUpdate`]: ../models/gateway/events/struct.PresenceUpdate.html
-        on_presence_update,
-        presence_update,
-        PresenceUpdate
-    );
+        pub fn on_presence_update(presence_update, PresenceUpdate);
 
-    // on_typing_start
-    on_event_fn!(
         /// Set the handler function for [`TypingStart`] event
         ///
         /// [`TypingStart`]: ../models/gateway/events/struct.TypingStart.html
-        on_typing_start,
-        typing_start,
-        TypingStart
-    );
+        pub fn on_typing_start(typing_start, TypingStart);
 
-    // on_user_update
-    on_event_fn!(
         /// Set the handler function for [`UserUpdate`] event
         ///
         /// [`UserUpdate`]: ../models/gateway/events/struct.UserUpdate.html
-        on_user_update,
-        user_update,
-        UserUpdate
-    );
+        pub fn on_user_update(user_update, UserUpdate)
+    }
 }

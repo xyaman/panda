@@ -1,5 +1,10 @@
-use crate::models::guild::GuildMember;
-use crate::models::user::User;
+use crate::{
+    error::Result,
+    http::HttpClient,
+    models::{guild::GuildMember, user::User},
+};
+
+use super::Embed;
 
 use serde::{Deserialize, Serialize};
 
@@ -20,7 +25,8 @@ pub struct Message {
     mention_roles: Vec<String>,
     // mentions_channels: Vec<ChannelMention>,
     // attatchments: Vec<Attachtment>,
-    // embed: Vec<Embed>,
+    #[serde(default)]
+    embed: Vec<Embed>,
     // reactions: Vec<Reactions>
     nonce: Option<String>,
     pinned: bool,
@@ -102,9 +108,9 @@ impl Message {
     //  &self.attatchments
     // }
 
-    // pub fn embed -> &[Embed] {
-    //  &self.embed
-    // }
+    pub fn embed(&self) -> &[Embed] {
+        &self.embed
+    }
 
     // pub fn reactions(&self) -> &[Reactions] {
     //  &self.reactions
@@ -131,5 +137,11 @@ impl Message {
     // message_reference: MessageReference
     pub fn flags(&self) -> Option<u64> {
         self.flags
+    }
+
+    // HTTP
+
+    pub async fn send_message(&self, http: &HttpClient, content: impl AsRef<str>) -> Result<Message> {
+        http.send_message(self.channel_id(), content).await
     }
 }

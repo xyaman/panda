@@ -1,7 +1,7 @@
 use crate::models::channel::Overwrite;
 use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Default, Deserialize, Serialize)]
 pub struct ChannelEdit {
     name: Option<String>,
     position: Option<u64>,
@@ -15,18 +15,8 @@ pub struct ChannelEdit {
 }
 
 impl ChannelEdit {
-    pub fn new() -> ChannelEdit {
-        ChannelEdit {
-            name: None,
-            position: None,
-            topic: None,
-            nsfw: None,
-            rate_limit_per_user: None,
-            bitrate: None,
-            user_limit: None,
-            permission_overwrites: None, // TODO: check this
-            parent_id: None,
-        }
+    pub fn new() -> Self {
+        ChannelEdit::default()
     }
 
     pub fn name(mut self, name: impl Into<String>) -> Self {

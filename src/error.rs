@@ -1,4 +1,4 @@
-//! # "Discord" error types
+//! # Panda error types
 //! TODO: ADD DISCORD LINKS
 
 use async_tungstenite::tungstenite::Error as TungsteniteError;
@@ -6,8 +6,6 @@ use std::{error::Error, fmt, result::Result as StdResult};
 
 /// This library use a shared result type, because all functions returns the same error type
 pub type Result<T> = StdResult<T, DiscordError>;
-
-// UNRECOVERABLE ERRORS
 
 /// The error enum for this "Discord" library
 #[derive(Debug)]
