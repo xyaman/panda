@@ -1,5 +1,5 @@
 <div align="center">
-    <img src="https://i.postimg.cc/RhwNMHtZ/banner.png" />
+    <img style="max-width: 60%;"src="https://i.postimg.cc/RhwNMHtZ/banner.png" />
 </div>
 <hr />
 <div align="center">
