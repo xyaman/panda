@@ -5,7 +5,7 @@ use process::gateway_process;
 
 // crate imports
 use crate::{
-    error::{DiscordError, Result},
+    error::{PandaError, Result},
     models::gateway::{commands::Command, events::Event},
 };
 
@@ -36,9 +36,7 @@ impl GatewayConnection {
         let url = url::Url::parse("wss://gateway.discord.gg/?v=6&encoding=json").unwrap();
 
         // Connect to the discord gateway through a websocket
-        let (ws, _) = connect_async(url)
-            .await
-            .map_err(|_| DiscordError::CantConnectToGateway)?;
+        let (ws, _) = connect_async(url).await.map_err(|_| PandaError::CantConnectToGateway)?;
 
         // Spawn gateway process manager
         let (to_client, mut from_gateway) = mpsc::unbounded();
@@ -52,14 +50,11 @@ impl GatewayConnection {
         });
 
         // Receive Hello event from the gatewat
-        let event = from_gateway
-            .next()
-            .await
-            .ok_or_else(|| DiscordError::ConnectionClosed)?;
+        let event = from_gateway.next().await.ok_or_else(|| PandaError::ConnectionClosed)?;
 
         let heartbeat_interval = match event {
             Event::Hello(v) => v,
-            _ => return Err(DiscordError::UnknownPayloadReceived.into()),
+            _ => return Err(PandaError::UnknownPayloadReceived.into()),
         };
 
         Ok(GatewayConnection {

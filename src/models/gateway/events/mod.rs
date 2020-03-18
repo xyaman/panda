@@ -83,7 +83,7 @@ pub use ready::Ready;
 
 // crate
 use super::payload::{Opcode, Payload};
-use crate::error::{DiscordError, Result};
+use crate::error::{PandaError, Result};
 
 use std::convert::TryFrom;
 
@@ -97,7 +97,7 @@ pub(crate) enum Event {
     InvalidSession(bool),    // op: 9
     Hello(u64),              // op: 10
     HeartbeatACK,            // op: 11
-    Close(DiscordError),
+    Close(PandaError),
 }
 
 #[derive(Debug)]
@@ -146,17 +146,17 @@ pub(crate) enum DispatchEvent {
 }
 
 impl TryFrom<Payload> for Event {
-    type Error = DiscordError;
+    type Error = PandaError;
 
     fn try_from(p: Payload) -> Result<Event> {
         match p.op {
             Opcode::Dispatch => Ok(Event::Dispatch(handle_dispatch(p)?)),
             Opcode::Reconnect => Ok(Event::Reconnect),
             Opcode::InvalidSession => {
-                let d = p.d.ok_or_else(|| DiscordError::InvalidPayloadFormat)?;
+                let d = p.d.ok_or_else(|| PandaError::InvalidPayloadFormat)?;
                 let resumable = match d {
                     Value::Bool(v) => v,
-                    _ => return Err(DiscordError::InvalidPayloadFormat),
+                    _ => return Err(PandaError::InvalidPayloadFormat),
                 };
 
                 Ok(Event::InvalidSession(resumable))
@@ -166,21 +166,21 @@ impl TryFrom<Payload> for Event {
                 struct Hello {
                     heartbeat_interval: u64,
                 }
-                let d = p.d.ok_or_else(|| DiscordError::InvalidPayloadFormat)?;
+                let d = p.d.ok_or_else(|| PandaError::InvalidPayloadFormat)?;
                 let hello: Hello = serde_json::from_value(d).unwrap();
 
                 Ok(Event::Hello(hello.heartbeat_interval))
             }
             Opcode::HeartbeatACK => Ok(Event::HeartbeatACK),
-            _ => Err(DiscordError::UnexpectedPayloadReceived),
+            _ => Err(PandaError::UnexpectedPayloadReceived),
         }
     }
 }
 
 ///
 fn handle_dispatch(p: Payload) -> Result<DispatchEvent> {
-    let d = p.d.ok_or_else(|| DiscordError::InvalidPayloadFormat)?;
-    let t = p.t.ok_or_else(|| DiscordError::InvalidPayloadFormat)?;
+    let d = p.d.ok_or_else(|| PandaError::InvalidPayloadFormat)?;
+    let t = p.t.ok_or_else(|| PandaError::InvalidPayloadFormat)?;
 
     match t.as_str() {
         "READY" => {
@@ -318,6 +318,6 @@ fn handle_dispatch(p: Payload) -> Result<DispatchEvent> {
             let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::VoiceServerUpdate(event))
         }
-        _ => Err(DiscordError::InvalidPayloadFormat),
+        _ => Err(PandaError::InvalidPayloadFormat),
     }
 }

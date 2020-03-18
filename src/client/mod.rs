@@ -10,7 +10,7 @@ use handler::EventHandler;
 pub use session::Session;
 
 use crate::{
-    error::{DiscordError, Result},
+    error::{PandaError, Result},
     gateway::{heartbeat, GatewayConnection},
     models::gateway::{
         commands::Command,
@@ -216,10 +216,10 @@ impl Client {
 
                         // Return if there are unrecoverable errors
                         match &error {
-                            DiscordError::AuthenticationFailed
-                            | DiscordError::InvalidApiGatewayVersion
-                            | DiscordError::InvalidShard
-                            | DiscordError::ShardingRequired => return Err(error),
+                            PandaError::AuthenticationFailed
+                            | PandaError::InvalidApiGatewayVersion
+                            | PandaError::InvalidShard
+                            | PandaError::ShardingRequired => return Err(error),
                             _ => {}
                         }
                         // If there was a recoverable error, try to reconnect

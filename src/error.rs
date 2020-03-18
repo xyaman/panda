@@ -5,11 +5,11 @@ use async_tungstenite::tungstenite::Error as TungsteniteError;
 use std::{error::Error, fmt, result::Result as StdResult};
 
 /// This library use a shared result type, because all functions returns the same error type
-pub type Result<T> = StdResult<T, DiscordError>;
+pub type Result<T> = StdResult<T, PandaError>;
 
 /// The error enum for this "Discord" library
 #[derive(Debug)]
-pub enum DiscordError {
+pub enum PandaError {
     /// Returned when there was an authentication error and the gateway is closed
     AuthenticationFailed,
 
@@ -75,7 +75,7 @@ pub enum DiscordError {
     TungsteniteError(TungsteniteError),
 }
 
-impl fmt::Display for DiscordError {
+impl fmt::Display for PandaError {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
             Self::AuthenticationFailed => write!(f, "Authentication failed"),
@@ -102,28 +102,28 @@ impl fmt::Display for DiscordError {
     }
 }
 
-impl Error for DiscordError {}
+impl Error for PandaError {}
 
 // Error parsing
-impl From<serde_json::Error> for DiscordError {
+impl From<serde_json::Error> for PandaError {
     fn from(error: serde_json::Error) -> Self {
         // InvalidPayloadFormat
 
         if error.is_data() {
-            return DiscordError::InvalidPayloadFormat;
+            return PandaError::InvalidPayloadFormat;
         }
 
-        DiscordError::SerdeError(error)
+        PandaError::SerdeError(error)
     }
 }
 
-impl From<TungsteniteError> for DiscordError {
+impl From<TungsteniteError> for PandaError {
     fn from(error: TungsteniteError) -> Self {
         // TODO: Improve this (IO) errors
 
         match error {
-            TungsteniteError::ConnectionClosed => DiscordError::ConnectionClosed,
-            _ => DiscordError::TungsteniteError(error),
+            TungsteniteError::ConnectionClosed => PandaError::ConnectionClosed,
+            _ => PandaError::TungsteniteError(error),
         }
     }
 }

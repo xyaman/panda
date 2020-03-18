@@ -144,4 +144,8 @@ impl Message {
     pub async fn send_message(&self, http: &HttpClient, content: impl AsRef<str>) -> Result<Message> {
         http.send_message(self.channel_id(), content).await
     }
+
+    pub async fn send_embed(&self, http: &HttpClient, embed: super::Embed) -> Result<Message> {
+        http.send_embed(self.channel_id(), embed).await
+    }
 }

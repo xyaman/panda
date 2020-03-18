@@ -2,7 +2,7 @@ mod rate_limit;
 use rate_limit::RateLimit;
 
 use crate::{
-    error::{DiscordError, Result},
+    error::{PandaError, Result},
     models::{
         channel::{Channel, Embed, Message},
         user::User,
@@ -51,7 +51,7 @@ impl HttpClient {
             .client
             .send_async(req)
             .await
-            .map_err(|_| DiscordError::HttpNoResponse)?;
+            .map_err(|_| PandaError::HttpNoResponse)?;
 
         // Catch http errors and return if there is one
         self._catch_http_errors(&res)?;
@@ -83,7 +83,7 @@ impl HttpClient {
             .client
             .send_async(req)
             .await
-            .map_err(|_| DiscordError::HttpNoResponse)?;
+            .map_err(|_| PandaError::HttpNoResponse)?;
 
         self._catch_http_errors(&res)?;
 
@@ -113,7 +113,7 @@ impl HttpClient {
             .client
             .send_async(req)
             .await
-            .map_err(|_| DiscordError::HttpNoResponse)?;
+            .map_err(|_| PandaError::HttpNoResponse)?;
 
         self._catch_http_errors(&res)?;
 
@@ -142,7 +142,7 @@ impl HttpClient {
             .client
             .send_async(req)
             .await
-            .map_err(|_| DiscordError::HttpNoResponse)?;
+            .map_err(|_| PandaError::HttpNoResponse)?;
 
         self._catch_http_errors(&res)?;
 
@@ -173,7 +173,7 @@ impl HttpClient {
             .client
             .send_async(req)
             .await
-            .map_err(|_| DiscordError::HttpNoResponse)?;
+            .map_err(|_| PandaError::HttpNoResponse)?;
 
         // Catch http errors and return if there is one
         self._catch_http_errors(&res)?;
@@ -197,13 +197,13 @@ impl HttpClient {
             | StatusCode::NOT_MODIFIED
             | StatusCode::TOO_MANY_REQUESTS => return Ok(()),
 
-            StatusCode::BAD_REQUEST => DiscordError::HttpImproperlyFormatted,
-            StatusCode::FORBIDDEN => DiscordError::HttpForbidden, // no autorizado
-            StatusCode::NOT_FOUND => DiscordError::HttpInvalidParameters, // not found or bad format
-            StatusCode::METHOD_NOT_ALLOWED => DiscordError::HttpNoResponse, // method not allowed
-            // HANDLED BY RATELIMIT StatusCode::TOO_MANY_REQUESTS => DiscordError::HttpNoResponse, // too many requests
-            StatusCode::BAD_GATEWAY => DiscordError::HttpNoResponse, // gateway unavailable
-            _ => DiscordError::HttpNoResponse,
+            StatusCode::BAD_REQUEST => PandaError::HttpImproperlyFormatted,
+            StatusCode::FORBIDDEN => PandaError::HttpForbidden, // no autorizado
+            StatusCode::NOT_FOUND => PandaError::HttpInvalidParameters, // not found or bad format
+            StatusCode::METHOD_NOT_ALLOWED => PandaError::HttpNoResponse, // method not allowed
+            // HANDLED BY RATELIMIT StatusCode::TOO_MANY_REQUESTS => PandaError::HttpNoResponse, // too many requests
+            StatusCode::BAD_GATEWAY => PandaError::HttpNoResponse, // gateway unavailable
+            _ => PandaError::HttpNoResponse,
         };
 
         Err(err)

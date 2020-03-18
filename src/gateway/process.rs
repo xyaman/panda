@@ -1,5 +1,5 @@
 use crate::{
-    error::{DiscordError, Result},
+    error::{PandaError, Result},
     models::gateway::{commands::Command, events::Event, payload::Payload},
 };
 
@@ -58,7 +58,7 @@ pub(crate) async fn gateway_process(
                     error!("Error when receiving an event: {}", e);
                     // Check if there are unrecoverable errors
                     match e {
-                        DiscordError::AuthenticationFailed | DiscordError::ConnectionClosed => {
+                        PandaError::AuthenticationFailed | PandaError::ConnectionClosed => {
                             to_client.send(Event::Close(e)).await.expect("EVENT CLOSE");
                             break;
                         },
@@ -73,7 +73,7 @@ pub(crate) async fn gateway_process(
                 if let Err(e) = to_gateway_process(cmd, &mut ws_sender, last_sequence).await {
                     error!("Error when sending command to gateway: {}", e);
                     // Unhandled result, TODO: Handle result
-                    to_client.send(Event::Close(DiscordError::ConnectionClosed)).await;
+                    to_client.send(Event::Close(PandaError::ConnectionClosed)).await;
                     break;
                 }
             }
@@ -90,7 +90,7 @@ async fn from_gateway_process(
     last_sequence: Arc<AtomicU64>,
 ) -> Result<()> {
     // This error means connection error
-    let tm = tm.ok_or_else(|| DiscordError::ConnectionClosed)?;
+    let tm = tm.ok_or_else(|| PandaError::ConnectionClosed)?;
     let msg = tm?;
 
     // Get Payload from TungsteniteMessage
@@ -105,10 +105,7 @@ async fn from_gateway_process(
     let event = Event::try_from(p)?;
 
     // Send Event to client
-    to_client
-        .send(event)
-        .await
-        .map_err(|_| DiscordError::ConnectionClosed)?;
+    to_client.send(event).await.map_err(|_| PandaError::ConnectionClosed)?;
 
     Ok(())
 }
@@ -120,14 +117,14 @@ async fn to_gateway_process(
     last_sequence: Arc<AtomicU64>,
 ) -> Result<()> {
     // Get the command
-    let command = command.ok_or_else(|| DiscordError::ConnectionClosed)?;
+    let command = command.ok_or_else(|| PandaError::ConnectionClosed)?;
 
     // Check if it's a Close command
     if command == Command::Close {
         return to_gateway
             .send(TungsteniteMessage::Close(None))
             .await
-            .map_err(|_| DiscordError::ConnectionClosed);
+            .map_err(|_| PandaError::ConnectionClosed);
     }
 
     // Get the last sequence
@@ -140,7 +137,7 @@ async fn to_gateway_process(
     let tm = command.to_tungstenite_message(seq);
 
     // Send command to gateway
-    to_gateway.send(tm).await.map_err(|_| DiscordError::ConnectionClosed)?;
+    to_gateway.send(tm).await.map_err(|_| PandaError::ConnectionClosed)?;
 
     Ok(())
 }

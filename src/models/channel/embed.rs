@@ -93,18 +93,53 @@ impl Embed {
         self
     }
 
-    pub fn set_colot(&mut self, _color: u64) -> &mut Self {
+    pub fn set_color(&mut self, _color: u64) -> &mut Self {
         unimplemented!();
     }
 
-    pub fn set_footer(&mut self, footer: EmbedFooter) -> &mut Self {
+    pub fn add_footer(&mut self, footer: EmbedFooter) -> &mut Self {
         self.footer = Some(footer);
 
         self
     }
 
-    pub fn set_image(&mut self, image: EmbedImage) -> &mut Self {
+    pub fn add_image(&mut self, image: EmbedImage) -> &mut Self {
         self.image = Some(image);
+
+        self
+    }
+
+    pub fn add_thumbnail(&mut self, thumbnail: EmbedThumbnail) -> &mut Self {
+        self.thumbnail = Some(thumbnail);
+
+        self
+    }
+
+    pub fn add_video(&mut self, video: EmbedVideo) -> &mut Self {
+        self.video = Some(video);
+
+        self
+    }
+
+    pub fn set_provider(&mut self, provider: EmbedProvider) -> &mut Self {
+        self.provider = Some(provider);
+
+        self
+    }
+
+    pub fn set_author(&mut self, author: EmbedAuthor) -> &mut Self {
+        self.author = Some(author);
+
+        self
+    }
+
+    pub fn add_field(&mut self, name: impl Into<String>, value: impl Into<String>, inline: bool) -> &mut Self {
+        let field = EmbedField {
+            name: name.into(),
+            value: value.into(),
+            inline,
+        };
+        self.fields.push(field);
 
         self
     }

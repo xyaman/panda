@@ -1,5 +1,5 @@
 // crate imports
-use crate::error::DiscordError;
+use crate::error::PandaError;
 
 use std::{convert::TryFrom, io::Read};
 
@@ -41,14 +41,12 @@ pub(crate) enum Opcode {
 }
 
 impl TryFrom<TungsteniteMessage> for Payload {
-    type Error = DiscordError;
+    type Error = PandaError;
 
     fn try_from(value: TungsteniteMessage) -> Result<Payload, Self::Error> {
         let payload = match value {
             // Normal text
-            TungsteniteMessage::Text(v) => {
-                serde_json::from_str(&v).map_err(|_| DiscordError::UnknownPayloadReceived)?
-            }
+            TungsteniteMessage::Text(v) => serde_json::from_str(&v).map_err(|_| PandaError::UnknownPayloadReceived)?,
 
             // Compressed Text
             TungsteniteMessage::Binary(v) => {
@@ -57,35 +55,35 @@ impl TryFrom<TungsteniteMessage> for Payload {
 
                 decoder
                     .read_to_string(&mut value)
-                    .map_err(|_| DiscordError::WrongCompression)?;
+                    .map_err(|_| PandaError::WrongCompression)?;
 
-                serde_json::from_str(&value).map_err(|_| DiscordError::UnknownPayloadReceived)?
+                serde_json::from_str(&value).map_err(|_| PandaError::UnknownPayloadReceived)?
             }
 
             // Close frame, returned when Discord gateway close/refuse the connection
             TungsteniteMessage::Close(reason) => {
-                let reason = reason.ok_or_else(|| DiscordError::ConnectionClosed)?;
+                let reason = reason.ok_or_else(|| PandaError::ConnectionClosed)?;
 
                 // Get the code as a u16
                 // https://discordapp.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes
                 let code: u16 = reason.code.into();
 
                 match code {
-                    4000 => return Err(DiscordError::ConnectionClosed),
-                    4001 => return Err(DiscordError::UnknownOpcodeSent),
-                    4002 => return Err(DiscordError::InvalidDecodeSent),
+                    4000 => return Err(PandaError::ConnectionClosed),
+                    4001 => return Err(PandaError::UnknownOpcodeSent),
+                    4002 => return Err(PandaError::InvalidDecodeSent),
                     // 4003 => this shouldn't happen
-                    4004 => return Err(DiscordError::AuthenticationFailed),
+                    4004 => return Err(PandaError::AuthenticationFailed),
                     // 4005 => this shouldn't happen
                     4007 => {
                         println!("Invalid seq sended");
-                        return Err(DiscordError::ConnectionClosed);
+                        return Err(PandaError::ConnectionClosed);
                     }
-                    4008 => return Err(DiscordError::ConnectionClosed), // TODO: Improve this
-                    4009 => return Err(DiscordError::ConnectionClosed), // TODO: Improve this
-                    4010 => return Err(DiscordError::InvalidShard),
-                    4011 => return Err(DiscordError::ShardingRequired),
-                    4012 => return Err(DiscordError::InvalidApiGatewayVersion),
+                    4008 => return Err(PandaError::ConnectionClosed), // TODO: Improve this
+                    4009 => return Err(PandaError::ConnectionClosed), // TODO: Improve this
+                    4010 => return Err(PandaError::InvalidShard),
+                    4011 => return Err(PandaError::ShardingRequired),
+                    4012 => return Err(PandaError::InvalidApiGatewayVersion),
                     _ => panic!("UNDEFINED Close error received"),
                 }
             }

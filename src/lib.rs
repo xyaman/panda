@@ -18,16 +18,18 @@
 #[doc(inline)]
 pub mod client;
 #[doc(inline)]
-pub mod error;
-#[doc(inline)]
 pub mod models;
 #[doc(inline)]
 pub mod utils;
 
+mod error;
 mod gateway;
 mod http;
 
+pub use error::PandaError;
+
 // Re-exports
+pub use client::Session;
 pub use models::gateway::events;
 
 // Shortcut functions
