@@ -201,7 +201,7 @@ impl HttpClient {
             StatusCode::FORBIDDEN => PandaError::HttpForbidden, // no autorizado
             StatusCode::NOT_FOUND => PandaError::HttpInvalidParameters, // not found or bad format
             StatusCode::METHOD_NOT_ALLOWED => PandaError::HttpNoResponse, // method not allowed
-            // HANDLED BY RATELIMIT StatusCode::TOO_MANY_REQUESTS => PandaError::HttpNoResponse, // too many requests
+            // HANDLED BY RATELIMIT StatusCode::TOO_MANY_REQUESTS => PandaError::HttpNoResponse,
             StatusCode::BAD_GATEWAY => PandaError::HttpNoResponse, // gateway unavailable
             _ => PandaError::HttpNoResponse,
         };
@@ -569,7 +569,6 @@ impl HttpClient {
         Ok(())
     }
 
-    // TODO: ADD THIS EVENT. (NEW)
     /// Deletes all reactions on a [`Message`]. This endpoint requires the **MANAGE_MESSAGES**
     /// permission to be present on the current user. Fires a [`MessageReactionRemoveEmoji`].
     ///

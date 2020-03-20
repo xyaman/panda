@@ -52,6 +52,7 @@ type MessageDeleteBulkFn = event_trait!(MessageDeleteBulk);
 type MessageReactionAddFn = event_trait!(MessageReactionAdd);
 type MessageReactionRemoveFn = event_trait!(MessageReactionRemove);
 type MessageReactionRemoveAllFn = event_trait!(MessageReactionRemoveAll);
+type MessageReactionRemoveEmojiFn = event_trait!(MessageReactionRemoveEmoji);
 
 // Presence functions trait
 type PresenceUpdateFn = event_trait!(PresenceUpdate);
@@ -95,6 +96,7 @@ pub(crate) struct EventHandler {
     pub(crate) message_reaction_add: OptionBox<MessageReactionAddFn>,
     pub(crate) message_reaction_remove: OptionBox<MessageReactionRemoveFn>,
     pub(crate) message_reaction_remove_all: OptionBox<MessageReactionRemoveAllFn>,
+    pub(crate) message_reaction_remove_emoji: OptionBox<MessageReactionRemoveEmojiFn>,
 
     // Presence
     pub(crate) presence_update: OptionBox<PresenceUpdateFn>,

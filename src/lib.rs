@@ -32,7 +32,8 @@ pub use error::PandaError;
 pub use client::Session;
 pub use models::gateway::events;
 
-// Shortcut functions
+// Types
+pub type HandlerResult = Result<(), Box<dyn std::error::Error>>;
 
 /// Create a new panda Client with the default configs
 pub async fn new(token: impl Into<String>) -> error::Result<client::Client> {

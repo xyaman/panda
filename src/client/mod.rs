@@ -79,13 +79,18 @@ impl Client {
             token.insert_str(0, "Bot ");
         }
 
-        Ok(Self {
+        let mut this = Self {
             handler: EventHandler::new(),
             config: Config::new_default(),
             token: token.clone(),
             session: Arc::new(Session::new(token)),
             gateway,
-        })
+        };
+
+        // Send identify and spawn heartbeater
+        this.clean_connect().await;
+
+        Ok(this)
     }
 
     /// Create a new "discord" Client with personalized configs
@@ -95,9 +100,6 @@ impl Client {
 
     /// Start the bot connection process
     pub async fn start(&mut self) -> Result<()> {
-        // Send identify and spawn heartbeater
-        self.clean_connect().await;
-
         // Connection loop
         loop {
             if let Some(event) = self.gateway.from_gateway.next().await {
@@ -191,6 +193,9 @@ impl Client {
                         }
                         DispatchEvent::MessageReactionRemoveAll(e) => {
                             handle_event!(self, message_reaction_remove_all, e);
+                        }
+                        DispatchEvent::MessageReactionRemoveEmoji(e) => {
+                            handle_event!(self, message_reaction_remove_emoji, e);
                         }
                         // Presences
                         DispatchEvent::PresenceUpdate(e) => {
@@ -452,6 +457,12 @@ impl Client {
         ///
         /// [`MessageReactionRemoveAll`]: ../models/gateway/events/struct.MessageReactionRemoveAll.html
         pub fn on_message_reaction_remove_all(message_reaction_remove_all, MessageReactionRemoveAll);
+
+        /// Set the handler function for [`MessageReactionRemoveEmoji`] event
+        ///
+        /// [`MessageReactionRemoveEmoji`]: ../models/gateway/events/struct.MessageReactionRemoveEmoji.html
+        pub fn on_message_reaction_remove_emoji(message_reaction_remove_emoji, MessageReactionRemoveEmoji);
+
 
         // *******************************************************************************
         // * PRESENCE METHODS

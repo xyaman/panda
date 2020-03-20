@@ -26,6 +26,7 @@ mod message_delete_bulk;
 mod message_reaction_add;
 mod message_reaction_remove;
 mod message_reaction_remove_all;
+mod message_reaction_remove_emoji;
 mod message_update;
 
 mod presence_update;
@@ -67,6 +68,7 @@ pub use message_delete_bulk::MessageDeleteBulk;
 pub use message_reaction_add::MessageReactionAdd;
 pub use message_reaction_remove::MessageReactionRemove;
 pub use message_reaction_remove_all::MessageReactionRemoveAll;
+pub use message_reaction_remove_emoji::MessageReactionRemoveEmoji;
 pub use message_update::MessageUpdate;
 
 // PRECENCE
@@ -134,6 +136,7 @@ pub(crate) enum DispatchEvent {
     MessageReactionAdd(MessageReactionAdd),
     MessageReactionRemove(MessageReactionRemove),
     MessageReactionRemoveAll(MessageReactionRemoveAll),
+    MessageReactionRemoveEmoji(MessageReactionRemoveEmoji),
 
     // presence
     PresenceUpdate(PresenceUpdate),
@@ -293,6 +296,10 @@ fn handle_dispatch(p: Payload) -> Result<DispatchEvent> {
         "MESSAGE_REACTION_REMOVE_ALL" => {
             let event = serde_json::from_value(d)?;
             Ok(DispatchEvent::MessageReactionRemoveAll(event))
+        }
+        "MESSAGE_REACTION_REMOVE_EMOJI" => {
+            let event = serde_json::from_value(d)?;
+            Ok(DispatchEvent::MessageReactionRemoveEmoji(event))
         }
 
         // Presence
