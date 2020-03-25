@@ -1,5 +1,5 @@
 // This example shows how to send an embed, how actually handler functions are.
-// * HandlerResult * it's just a alias for Result<(), Box<dyn std::error::Error>>
+// * HandlerResult * it's just an alias for Result<(), Box<dyn std::error::Error>>
 
 use panda::{events::MessageCreate, models::Embed, HandlerResult, Session};
 use std::{error::Error, sync::Arc};

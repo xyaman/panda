@@ -1,6 +1,6 @@
 //! Session
 
-use crate::http::HttpClient;
+use crate::HttpClient;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 

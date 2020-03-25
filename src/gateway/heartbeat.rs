@@ -2,7 +2,6 @@ use crate::models::gateway::commands::Command;
 
 use async_std::task;
 use futures::{channel::mpsc::UnboundedSender, sink::SinkExt};
-use log::error;
 use std::time::Duration;
 
 /// This function needs to be spawned to work in the background,
@@ -14,11 +13,12 @@ pub(crate) async fn heartbeater(heartbeat_interval: u64, mut to_gateway: Unbound
 
         // Always check first if the channel it's open
         if to_gateway.is_closed() {
+            log::info!("Old heartbeater exited");
             break;
         }
         let heartbeat = Command::new_heartbeat();
         if let Err(e) = to_gateway.send(heartbeat).await {
-            error!("Error when sending Heartbeat: {}", e);
+            log::error!("Error when sending Heartbeat: {}", e);
         };
     }
 }

@@ -1,5 +1,8 @@
 mod rate_limit;
+mod routing;
+
 use rate_limit::RateLimit;
+use routing::Route;
 
 use crate::{
     error::{PandaError, Result},
@@ -9,10 +12,12 @@ use crate::{
     },
 };
 
-use isahc::{http::StatusCode, prelude::*, HttpClient as IsachClient};
+use isahc::{
+    http::{Method, StatusCode},
+    prelude::*,
+    HttpClient as IsachClient,
+};
 use serde::Serialize;
-
-pub(crate) const DISCORD_URL: &'static str = "https://discordapp.com/api";
 
 pub struct HttpClient {
     token: String,
@@ -31,161 +36,49 @@ impl HttpClient {
         }
     }
 
-    /// This function makes a GET request, and returns the response.
-    /// uri: URL where the client will make a GET request.
-    /// rt_key: RateLimit key
-    async fn _get(&self, uri: String, rt_key: String) -> Result<Response<Body>> {
-        // Create request
-        let req = Request::builder()
-            .method("GET")
-            .uri(&uri)
-            .header("Authorization", &self.token)
-            .body(())
-            .unwrap();
-
+    async fn _make_request<B: Into<Body>>(&self, route: Route<B>) -> Result<Response<Body>> {
         // Check and wait if we reach the limit
-        self.rate_limit.check_and_sleep(&rt_key).await;
+        self.rate_limit.check_and_sleep(&route.bucket_key).await;
 
-        // Get response
-        let res = self
-            .client
-            .send_async(req)
-            .await
-            .map_err(|_| PandaError::HttpNoResponse)?;
+        let response = match route.method {
+            Method::GET | Method::PUT | Method::DELETE => {
+                let request = Request::builder()
+                    .method(route.method)
+                    .uri(&route.uri)
+                    .header("Authorization", &self.token)
+                    .body(())
+                    .unwrap();
 
-        // Catch http errors and return if there is one
-        self._catch_http_errors(&res)?;
+                // Get response
+                // TODO: ERROR WRAPPER
+                self.client
+                    .send_async(request)
+                    .await
+                    .map_err(|_| PandaError::HttpNoResponse)?
+            }
+            Method::POST | Method::PATCH => {
+                let request = Request::builder()
+                    .method(route.method)
+                    .uri(&route.uri)
+                    .header("Authorization", &self.token)
+                    .header("Content-Type", "application/json")
+                    .body(route.body)
+                    .unwrap();
+
+                // Get response
+                // TODO: ERROR WRAPPER
+                self.client
+                    .send_async(request)
+                    .await
+                    .map_err(|_| PandaError::HttpNoResponse)?
+            }
+            _ => unimplemented!(),
+        };
 
         // Update the limit with the response headers
-        self.rate_limit.update(rt_key, &res).await;
+        self.rate_limit.update(route.bucket_key, &response).await;
 
-        // if let Err(e) = self.catch_http_error() {
-        //      parse error JSON struct
-        // }
-
-        Ok(res)
-    }
-
-    /// This function makes a POST request, and returns the response.
-    async fn _post(&self, uri: String, rt_key: String, body: impl Into<Body>) -> Result<Response<Body>> {
-        let req = Request::builder()
-            .method("POST")
-            .uri(uri)
-            .header("Authorization", &self.token)
-            .header("Content-Type", "application/json")
-            .body(body)
-            .unwrap();
-
-        // Check and wait if we reach the limit
-        self.rate_limit.check_and_sleep(&rt_key).await;
-
-        let res = self
-            .client
-            .send_async(req)
-            .await
-            .map_err(|_| PandaError::HttpNoResponse)?;
-
-        self._catch_http_errors(&res)?;
-
-        // Update the limit with the response headers
-        self.rate_limit.update(rt_key, &res).await;
-        // if let Err(e) = self.catch_http_error() {
-        //      parse error JSON struct
-        // }
-
-        Ok(res)
-    }
-
-    /// This function makes a PATCH request, and returns the response.
-    async fn _patch(&self, uri: String, rt_key: String, body: impl Into<Body>) -> Result<Response<Body>> {
-        let req = Request::builder()
-            .method("PATCH")
-            .uri(uri)
-            .header("Authorization", &self.token)
-            .header("Content-Type", "application/json")
-            .body(body)
-            .unwrap();
-
-        // Check and wait if we reach the limit
-        self.rate_limit.check_and_sleep(&rt_key).await;
-
-        let res = self
-            .client
-            .send_async(req)
-            .await
-            .map_err(|_| PandaError::HttpNoResponse)?;
-
-        self._catch_http_errors(&res)?;
-
-        // Update the limit with the response headers
-        self.rate_limit.update(rt_key, &res).await;
-        // if let Err(e) = self.catch_http_error() {
-        //      parse error JSON struct
-        // }
-
-        Ok(res)
-    }
-
-    /// This function makes a PATCH request, and returns the response.
-    async fn _put(&self, uri: String, rt_key: String) -> Result<Response<Body>> {
-        let req = Request::builder()
-            .method("PUT")
-            .uri(uri)
-            .header("Authorization", &self.token)
-            .body(())
-            .unwrap();
-
-        // Check and wait if we reach the limit
-        self.rate_limit.check_and_sleep(&rt_key).await;
-
-        let res = self
-            .client
-            .send_async(req)
-            .await
-            .map_err(|_| PandaError::HttpNoResponse)?;
-
-        self._catch_http_errors(&res)?;
-
-        // Update the limit with the response headers
-        self.rate_limit.update(rt_key, &res).await;
-        // if let Err(e) = self.catch_http_error() {
-        //      parse error JSON struct
-        // }
-
-        Ok(res)
-    }
-
-    /// This function makes a GET request, and returns the response.
-    async fn _delete(&self, uri: String, rt_key: String) -> Result<Response<Body>> {
-        // Create request
-        let req = Request::builder()
-            .method("DELETE")
-            .uri(uri)
-            .header("Authorization", &self.token)
-            .body(())
-            .unwrap();
-
-        // Check and wait if we reach the limit
-        self.rate_limit.check_and_sleep(&rt_key).await;
-
-        // Get response
-        let res = self
-            .client
-            .send_async(req)
-            .await
-            .map_err(|_| PandaError::HttpNoResponse)?;
-
-        // Catch http errors and return if there is one
-        self._catch_http_errors(&res)?;
-
-        // Update the limit with the response headers
-        self.rate_limit.update(rt_key, &res).await;
-
-        // if let Err(e) = self.catch_http_error() {
-        //      parse error JSON struct
-        // }
-
-        Ok(res)
+        Ok(response)
     }
 
     // TODO: Rename this and improve
@@ -219,16 +112,11 @@ impl HttpClient {
     ///
     /// [`Channel`]: ../../panda/models/channel/struct.Channel.html
     pub async fn get_channel(&self, channel_id: impl AsRef<str>) -> Result<Channel> {
-        // Parse URL
-        let uri = format!("{}/channels/{}", DISCORD_URL, channel_id.as_ref());
+        // Create Route
+        let route = Route::<()>::get_channel(channel_id);
+        let mut res = self._make_request(route).await?;
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
-
-        let mut res = self._get(uri, rt_key).await?;
-
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Update a channel's settings. Requires the **MANAGE_CHANNELS** permission for the guild.
@@ -239,17 +127,14 @@ impl HttpClient {
     /// [`MessageEdit`]: ../../panda/utils/builder/struct.MessageEdit.html
     /// [`ChannelUpdate`]: ../../panda/models/gateway/events/struct.ChannelUpdate.html
     pub async fn edit_channel(&self, channel_id: impl AsRef<str>, body: impl Serialize) -> Result<Channel> {
-        // Parse URL
-        let uri = format!("{}/channels/{}", DISCORD_URL, channel_id.as_ref());
+        // Create route
+        let body = serde_json::to_string(&body)?;
+        let route = Route::<String>::edit_channel(channel_id, body);
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
-
-        let body = serde_json::to_string(&body).unwrap();
-        let mut res = self._patch(uri, rt_key, body).await?;
+        let mut res = self._make_request(route).await?;
 
         // If an error wasn't returned, it's safe to unwrap
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Delete a channel, or close a private message. Requires the **MANAGE_CHANNELS** permission
@@ -260,15 +145,11 @@ impl HttpClient {
     /// [`ChannelDelete`]: ../../panda/models/gateway/events/struct.ChannelDelete.html
     pub async fn delete_channel(&self, channel_id: impl AsRef<str>) -> Result<Channel> {
         // Parse URL
-        let uri = format!("{}/channels/{}", DISCORD_URL, channel_id.as_ref());
+        let route = Route::<()>::delete_channel(channel_id);
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+        let mut res = self._make_request(route).await?;
 
-        let mut res = self._delete(uri, rt_key).await?;
-
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Returns a Vec<[`Message`]> of a channel. If operating on a guild channel, this endpoint
@@ -278,25 +159,15 @@ impl HttpClient {
     pub async fn get_messages_around(
         &self,
         channel_id: impl AsRef<str>,
-        msg_id: impl AsRef<str>,
+        message_id: impl AsRef<str>,
         limit: u8,
     ) -> Result<Vec<Message>> {
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/messages?around={}&limit={}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            msg_id.as_ref(),
-            limit
-        );
+        // Create route
+        let route = Route::<()>::get_channel_messages("around", channel_id, message_id, limit);
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+        let mut res = self._make_request(route).await?;
 
-        let mut res = self._get(uri, rt_key).await?;
-
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Returns a Vec<[`Message`]> of a channel. If operating on a guild channel, this endpoint
@@ -306,24 +177,15 @@ impl HttpClient {
     pub async fn get_messages_before(
         &self,
         channel_id: impl AsRef<str>,
-        msg_id: impl AsRef<str>,
+        message_id: impl AsRef<str>,
         limit: u8,
     ) -> Result<Vec<Message>> {
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/messages?before={}&limit={}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            msg_id.as_ref(),
-            limit
-        );
+        // Create route
+        let route = Route::<()>::get_channel_messages("before", channel_id, message_id, limit);
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+        let mut res = self._make_request(route).await?;
 
-        let mut res = self._get(uri, rt_key).await?;
-
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Returns a Vec<[`Message`]> of a channel. If operating on a guild channel, this endpoint
@@ -333,24 +195,15 @@ impl HttpClient {
     pub async fn get_messages_after(
         &self,
         channel_id: impl AsRef<str>,
-        msg_id: impl AsRef<str>,
+        message_id: impl AsRef<str>,
         limit: u8,
     ) -> Result<Vec<Message>> {
-        // Format uri
-        let uri = format!(
-            "{}/channels/{}/messages?after={}&limit={}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            msg_id.as_ref(),
-            limit
-        );
+        // Create route
+        let route = Route::<()>::get_channel_messages("after", channel_id, message_id, limit);
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+        let mut res = self._make_request(route).await?;
 
-        let mut res = self._get(uri, rt_key).await?;
-
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Returns a specific [`Message`] in the channel. If operating on a guild channel, this endpoint
@@ -358,19 +211,12 @@ impl HttpClient {
     ///
     /// [`Message`]: ../../panda/models/channel/struct.Message.html
     pub async fn get_message(&self, channel_id: impl AsRef<str>, msg_id: impl AsRef<str>) -> Result<Message> {
-        let uri = format!(
-            "{}/channel/{}/messages/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            msg_id.as_ref()
-        );
+        // Create route
+        let route = Route::<()>::get_channel_message(channel_id, msg_id);
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+        let mut res = self._make_request(route).await?;
 
-        let mut res = self._get(uri, rt_key).await?;
-
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Creates a new message, and returns the [`Message`]. This will also trigger
@@ -379,22 +225,19 @@ impl HttpClient {
     /// [`Message`]: ../../panda/models/channel/struct.Message.html
     /// [`MessageCreate`]: ../../panda/models/gateway/events/struct.MessageCreate.html
     pub async fn send_message(&self, channel_id: impl AsRef<str>, content: impl AsRef<str>) -> Result<Message> {
-        let uri = format!("{}/channels/{}/messages", DISCORD_URL, channel_id.as_ref());
-
-        let msg = serde_json::json!({
+        // Create message body
+        let body = serde_json::json!({
             "content": content.as_ref(),
-            "tts": "false"
+            "tts": false
         });
+        // Parse to a valid Body, isahc::Body
+        let body = serde_json::to_string(&body)?;
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+        // Create route
+        let route = Route::<String>::create_message(channel_id, body);
+        let mut res = self._make_request(route).await?;
 
-        let msg = serde_json::to_string(&msg).unwrap();
-
-        let mut res = self._post(uri, rt_key, msg).await?;
-
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Creates a new message, and returns the [`Message`]. This will also trigger
@@ -403,22 +246,19 @@ impl HttpClient {
     /// [`Message`]: ../../panda/models/channel/struct.Message.html
     /// [`MessageCreate`]: ../../panda/models/gateway/events/struct.MessageCreate.html
     pub async fn send_embed(&self, channel_id: impl AsRef<str>, embed: Embed) -> Result<Message> {
-        let uri = format!("{}/channels/{}/messages", DISCORD_URL, channel_id.as_ref());
-
-        let msg = serde_json::json!({
+        let body = serde_json::json!({
             "embed": embed,
-            "tts": "false"
+            "tts": false
         });
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+        let body = serde_json::to_string(&body)?;
 
-        let msg = serde_json::to_string(&msg).unwrap();
+        // Create route
+        let route = Route::<String>::create_message(channel_id, body);
 
-        let mut res = self._post(uri, rt_key, msg).await?;
+        let mut res = self._make_request(route).await?;
 
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Add a reaction to a [`Message`], it needs the [`Channel`] ID, and [`Message`] ID
@@ -431,22 +271,10 @@ impl HttpClient {
         message_id: impl AsRef<str>,
         emoji: impl AsRef<str>,
     ) -> Result<()> {
-        // Encode emoji
-        let emoji = encode(emoji.as_ref());
+        // Create route
+        let route = Route::<()>::create_reaction(channel_id, message_id, emoji);
 
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions/{}/@me",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            message_id.as_ref(),
-            emoji
-        );
-
-        // Create RateLimit Key
-        let rt_key = format!("channel:{}:emoji", channel_id.as_ref());
-
-        let _res = self._put(uri, rt_key).await?;
+        let _res = self._make_request(route).await?;
 
         Ok(())
     }
@@ -461,22 +289,10 @@ impl HttpClient {
         message_id: impl AsRef<str>,
         emoji: impl AsRef<str>,
     ) -> Result<()> {
-        // Encode emoji
-        let emoji = encode(emoji.as_ref());
+        // Create route
+        let route = Route::<()>::delete_own_reaction(channel_id, message_id, emoji);
 
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions/{}/@me",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            message_id.as_ref(),
-            emoji
-        );
-
-        // Create RateLimit Key
-        let rt_key = format!("channel:{}:emoji", channel_id.as_ref());
-
-        let _res = self._delete(uri, rt_key).await?;
+        let _res = self._make_request(route).await?;
 
         Ok(())
     }
@@ -491,26 +307,13 @@ impl HttpClient {
         &self,
         channel_id: impl AsRef<str>,
         message_id: impl AsRef<str>,
-        user: impl AsRef<str>,
+        user_id: impl AsRef<str>,
         emoji: impl AsRef<str>,
     ) -> Result<()> {
-        // Encode emoji
-        let emoji = encode(emoji.as_ref());
+        // Create route
+        let route = Route::<()>::delete_user_reaction(channel_id, message_id, emoji, user_id);
 
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions/{}/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            message_id.as_ref(),
-            emoji,
-            user.as_ref()
-        );
-
-        // Create RateLimit Key
-        let rt_key = format!("channel:{}:emoji", channel_id.as_ref());
-
-        let _res = self._delete(uri, rt_key).await?;
+        let _res = self._make_request(route).await?;
 
         Ok(())
     }
@@ -527,24 +330,11 @@ impl HttpClient {
         message_id: impl AsRef<str>,
         emoji: impl AsRef<str>,
     ) -> Result<Vec<User>> {
-        // Encode emoji
-        let emoji = encode(emoji.as_ref());
+        let route = Route::<()>::get_reactions(channel_id, message_id, emoji);
 
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            message_id.as_ref(),
-            emoji,
-        );
+        let mut res = self._make_request(route).await?;
 
-        // Create RateLimit Key
-        let rt_key = format!("channel:{}:emoji", channel_id.as_ref());
-
-        let mut res = self._get(uri, rt_key).await?;
-
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Deletes all reactions on a [`Message`]. This endpoint requires the **MANAGE_MESSAGES**
@@ -553,18 +343,9 @@ impl HttpClient {
     /// [`Message`]: ../../panda/models/channel/struct.Message.html
     /// [`MessageReactionRemoveAll`]: ../../panda/models/gateway/events/struct.MessageReactionRemoveAll.html
     pub async fn remove_all_reactions(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            message_id.as_ref(),
-        );
+        let route = Route::<()>::delete_all_reactions(channel_id, message_id);
 
-        // Create RateLimit Key
-        let rt_key = format!("channel:{}:emoji", channel_id.as_ref());
-
-        let _res = self._delete(uri, rt_key).await?;
+        let _res = self._make_request(route).await?;
 
         Ok(())
     }
@@ -580,20 +361,9 @@ impl HttpClient {
         message_id: impl AsRef<str>,
         emoji: impl AsRef<str>,
     ) -> Result<()> {
-        let emoji = encode(emoji.as_ref());
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            message_id.as_ref(),
-            emoji
-        );
+        let route = Route::<()>::delete_all_reactions_for_emoji(channel_id, message_id, emoji);
 
-        // Create RateLimit Key
-        let rt_key = format!("channel:{}:emoji", channel_id.as_ref());
-
-        let _res = self._delete(uri, rt_key).await?;
+        let _res = self._make_request(route).await?;
 
         Ok(())
     }
@@ -608,22 +378,13 @@ impl HttpClient {
         message_id: impl AsRef<str>,
         body: impl Serialize,
     ) -> Result<Message> {
-        let uri = format!(
-            "{}/channels/{}/messages/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            message_id.as_ref()
-        );
+        let body = serde_json::to_string(&body)?;
 
-        let body = serde_json::to_string(&body).unwrap();
+        let route = Route::<String>::edit_message(channel_id, message_id, body);
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+        let mut res = self._make_request(route).await?;
 
-        let mut res = self._patch(uri, rt_key, body).await?;
-
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(res.json().unwrap())
+        Ok(res.json()?)
     }
 
     /// Delete a [`Message`], This will also trigger [`MessageDelete`] event
@@ -631,153 +392,128 @@ impl HttpClient {
     /// [`Message`]: ../../panda/models/channel/struct.Message.html
     /// [`MessageDelete`]: ../../panda/models/gateway/events/struct.MessageDelete.html
     pub async fn delete_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/messages/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            message_id.as_ref()
-        );
+        let route = Route::<()>::delete_message(channel_id, message_id);
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
-
-        let _res = self._delete(uri, rt_key).await?;
-
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(())
-    }
-
-    /// Delete a a bulk of [`Message`] (2 - 100), This will also trigger [`MessageDeleteBulk`] event.
-    ///
-    /// [`Message`]: ../../panda/models/channel/struct.Message.html
-    /// [`MessageDelete`]: ../../panda/models/gateway/events/struct.MessageDelete.html
-    pub async fn delete_many_messages(&self, channel_id: impl AsRef<str>, messages: &[&str]) -> Result<()> {
-        // Parse URL
-        let uri = format!("{}/channels/{}/messages/bulk-delete", DISCORD_URL, channel_id.as_ref(),);
-
-        let body = serde_json::json!({ "messages": messages });
-        let msg = serde_json::to_string(&body).unwrap();
-
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
-
-        let _res = self._post(uri, rt_key, msg).await?;
+        let _res = self._make_request(route).await?;
 
         Ok(())
     }
 
-    /// Edit the channel permission overwrites for a user or role in a channel. Only usable
-    /// for guild channels. Requires the **MANAGE_ROLES** permission.
-    ///
-    /// [`Message`]: ../../panda/models/channel/struct.Message.html
-    /// [`MessageDelete`]: ../../panda/models/gateway/events/struct.MessageDelete.html
-    pub async fn edit_channel_permissions(&self, _channel_id: impl AsRef<str>) -> Result<()> {
-        unimplemented!();
+    // /// Delete a a bulk of [`Message`] (2 - 100), This will also trigger [`MessageDeleteBulk`] event.
+    // ///
+    // /// [`Message`]: ../../panda/models/channel/struct.Message.html
+    // /// [`MessageDelete`]: ../../panda/models/gateway/events/struct.MessageDelete.html
+    // pub async fn delete_many_messages(&self, channel_id: impl AsRef<str>, messages: &[&str]) -> Result<()> {
+    //     // Parse URL
+    //     let uri = format!("{}/channels/{}/messages/bulk-delete", DISCORD_URL, channel_id.as_ref(),);
 
-        // // Parse URL
-        // let uri = format!("{}/channels/{}/permissions/{}", DISCORD_URL, channel_id.as_ref(), "");
+    //     let body = serde_json::json!({ "messages": messages });
+    //     let msg = serde_json::to_string(&body).unwrap();
 
-        // // Create RateLimit Key
-        // let rt_key = format!("channels:{}", channel_id.as_ref());
+    //     // Create RateLimit Key
+    //     let rt_key = format!("channels:{}", channel_id.as_ref());
 
-        // let _res = self._get(uri, rt_key).await?;
+    //     let _res = self._make_request(uri, rt_key, msg).await?;
 
-        // Ok(())
-    }
+    //     Ok(())
+    // }
 
-    // pub async fn get_channel_invites() {}
-    // pub async fn create_channel_invite() {}
+    // /// Edit the channel permission overwrites for a user or role in a channel. Only usable
+    // /// for guild channels. Requires the **MANAGE_ROLES** permission.
+    // ///
+    // /// [`Message`]: ../../panda/models/channel/struct.Message.html
+    // /// [`MessageDelete`]: ../../panda/models/gateway/events/struct.MessageDelete.html
+    // pub async fn edit_channel_permissions(&self, _channel_id: impl AsRef<str>) -> Result<()> {
+    //     unimplemented!();
 
-    // pub async fn delete_channel_permissions() {}
+    //     // // Parse URL
+    //     // let uri = format!("{}/channels/{}/permissions/{}", DISCORD_URL, channel_id.as_ref(), "");
 
-    /// Post a typing indicator for the specified channel.
-    /// Fires a [`TypingStart`] Gateway event
-    ///
-    /// [`TypingStart`]: ../../panda/models/gateway/events/struct.TypingStart.html
-    pub async fn trigger_typing(&self, channel_id: impl AsRef<str>) -> Result<()> {
-        // Parse URL
-        let uri = format!("{}/channels/{}/typing", DISCORD_URL, channel_id.as_ref());
+    //     // // Create RateLimit Key
+    //     // let rt_key = format!("channels:{}", channel_id.as_ref());
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+    //     // let _res = self._make_request(uri, rt_key).await?;
 
-        let _res = self._post(uri, rt_key, ()).await?;
+    //     // Ok(())
+    // }
 
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(())
-    }
+    // // pub async fn get_channel_invites() {}
+    // // pub async fn create_channel_invite() {}
 
-    /// Returns all pinned messages in the channel as a Vec of [`Message`] objects.
-    ///
-    /// [`Message`]: ../../panda/models/channel/struct.Message.html
-    pub async fn get_pinned_messages(&self, channel_id: impl AsRef<str>) -> Result<Vec<Message>> {
-        // Parse URL
-        let uri = format!("{}/channels/{}/pins", DISCORD_URL, channel_id.as_ref());
+    // // pub async fn delete_channel_permissions() {}
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+    // /// Post a typing indicator for the specified channel.
+    // /// Fires a [`TypingStart`] Gateway event
+    // ///
+    // /// [`TypingStart`]: ../../panda/models/gateway/events/struct.TypingStart.html
+    // pub async fn trigger_typing(&self, channel_id: impl AsRef<str>) -> Result<()> {
+    //     // Parse URL
+    //     let uri = format!("{}/channels/{}/typing", DISCORD_URL, channel_id.as_ref());
 
-        let mut res = self._get(uri, rt_key).await?;
+    //     // Create RateLimit Key
+    //     let rt_key = format!("channels:{}", channel_id.as_ref());
 
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(res.json().unwrap())
-    }
+    //     let _res = self._make_request(uri, rt_key, ()).await?;
 
-    /// Pin a message in a channel. Requires the **MANAGE_MESSAGES** permission
-    pub async fn pin_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/pins/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            message_id.as_ref()
-        );
+    //     // If an error wasn't returned, it's safe to unwrap
+    //     Ok(())
+    // }
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+    // /// Returns all pinned messages in the channel as a Vec of [`Message`] objects.
+    // ///
+    // /// [`Message`]: ../../panda/models/channel/struct.Message.html
+    // pub async fn get_pinned_messages(&self, channel_id: impl AsRef<str>) -> Result<Vec<Message>> {
+    //     // Parse URL
+    //     let uri = format!("{}/channels/{}/pins", DISCORD_URL, channel_id.as_ref());
 
-        let _res = self._put(uri, rt_key).await?;
+    //     // Create RateLimit Key
+    //     let rt_key = format!("channels:{}", channel_id.as_ref());
 
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(())
-    }
+    //     let mut res = self._make_request(uri, rt_key).await?;
 
-    /// Pin a message in a channel. Requires the **MANAGE_MESSAGES** permission.
-    pub async fn unpin_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
-        // Parse URL
-        let uri = format!(
-            "{}/channels/{}/pins/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            message_id.as_ref()
-        );
+    //     // If an error wasn't returned, it's safe to unwrap
+    //     Ok(res.json().unwrap())
+    // }
 
-        // Create RateLimit Key
-        let rt_key = format!("channels:{}", channel_id.as_ref());
+    // /// Pin a message in a channel. Requires the **MANAGE_MESSAGES** permission
+    // pub async fn pin_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
+    //     // Parse URL
+    //     let uri = format!(
+    //         "{}/channels/{}/pins/{}",
+    //         DISCORD_URL,
+    //         channel_id.as_ref(),
+    //         message_id.as_ref()
+    //     );
 
-        let _res = self._delete(uri, rt_key).await?;
+    //     // Create RateLimit Key
+    //     let rt_key = format!("channels:{}", channel_id.as_ref());
 
-        // If an error wasn't returned, it's safe to unwrap
-        Ok(())
-    }
+    //     let _res = self.__make_request(uri, rt_key).await?;
+
+    //     // If an error wasn't returned, it's safe to unwrap
+    //     Ok(())
+    // }
+
+    // /// Pin a message in a channel. Requires the **MANAGE_MESSAGES** permission.
+    // pub async fn unpin_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
+    //     // Parse URL
+    //     let uri = format!(
+    //         "{}/channels/{}/pins/{}",
+    //         DISCORD_URL,
+    //         channel_id.as_ref(),
+    //         message_id.as_ref()
+    //     );
+
+    //     // Create RateLimit Key
+    //     let rt_key = format!("channels:{}", channel_id.as_ref());
+
+    //     let _res = self.___make_request(uri, rt_key).await?;
+
+    //     // If an error wasn't returned, it's safe to unwrap
+    //     Ok(())
+    // }
 
     // PUT/channels/{channel.id}/recipients/{user.id}
 
     // DELETE/channels/{channel.id}/recipients/{user.id}
-}
-
-/// Used to encode emoji as a valid char in URL
-fn encode(data: &str) -> String {
-    let mut escaped = String::new();
-    for b in data.as_bytes().iter() {
-        match *b as char {
-            // Accepted characters
-            'A'..='Z' | 'a'..='z' | '0'..='9' | '-' | '_' | '.' | '~' => escaped.push(*b as char),
-
-            // Everything else is percent-encoded
-            b => escaped.push_str(format!("%{:02X}", b as u32).as_str()),
-        };
-    }
-    return escaped;
 }

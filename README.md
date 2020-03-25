@@ -31,7 +31,7 @@ cargo add panda
 or in `Cargo.toml`
 
 ```
-panda = "0.1.0"
+panda = "0.2.1"
 ```
 
 # Example usage

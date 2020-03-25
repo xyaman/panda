@@ -27,6 +27,7 @@ mod gateway;
 mod http;
 
 pub use error::PandaError;
+pub use http::HttpClient;
 
 // Re-exports
 pub use client::Session;
