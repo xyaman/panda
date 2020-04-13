@@ -31,16 +31,16 @@ cargo add panda
 or in `Cargo.toml`
 
 ```
-panda = "0.2.1"
+panda = "0.3.0"
 ```
 
 # Example usage
 
 ```rust
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
-    let mut client = panda::new("token").await?;
+    let mut client = panda::new("your token here").await?;
 
     client.on_ready(|s, ready| async move {
         println!("Bot {} is ready", ready.user().username());
