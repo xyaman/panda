@@ -30,7 +30,7 @@ pub use error::PandaError;
 pub use http::HttpClient;
 
 // Re-exports
-pub use client::Session;
+pub type Session = std::sync::Arc<client::SessionData>;
 pub use models::gateway::events;
 
 // Types

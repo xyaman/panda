@@ -7,11 +7,11 @@ use crate::{
 use std::{
     convert::TryFrom,
     result::Result as StdResult,
-    sync::atomic::{AtomicU64, Ordering},
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
 };
-
-// async std
-use async_std::{net::TcpStream, sync::Arc};
 
 // futures
 use futures::{
@@ -22,19 +22,19 @@ use futures::{
 };
 
 // tungstenite
-use async_tls::client::TlsStream;
-use async_tungstenite::{
-    stream::Stream,
-    tungstenite::{error::Error as TungsteniteError, Message as TungsteniteMessage},
-    WebSocketStream,
-};
-
-use log::error;
+use tokio_tungstenite::tungstenite::{Error as TungsteniteError, Message as TungsteniteMessage};
 
 // Websocket types
-type WebSocketSender =
-    futures::stream::SplitSink<WebSocketStream<Stream<TcpStream, TlsStream<TcpStream>>>, TungsteniteMessage>;
-type WebSocket = WebSocketStream<Stream<TcpStream, TlsStream<TcpStream>>>;
+type WebSocket = tokio_tungstenite::WebSocketStream<
+    tokio_tungstenite::stream::Stream<tokio::net::TcpStream, tokio_tls::TlsStream<tokio::net::TcpStream>>,
+>;
+
+type WebSocketSender = futures::stream::SplitSink<
+    tokio_tungstenite::WebSocketStream<
+        tokio_tungstenite::stream::Stream<tokio::net::TcpStream, tokio_tls::TlsStream<tokio::net::TcpStream>>,
+    >,
+    TungsteniteMessage,
+>;
 type TungsteniteOptionResult = Option<StdResult<TungsteniteMessage, TungsteniteError>>;
 
 /// This function manages all library/gateway commands and events
@@ -55,7 +55,7 @@ pub(crate) async fn gateway_process(
                 let last_sequence = Arc::clone(&last_sequence);
 
                 if let Err(e) = from_gateway_process(tm, &mut to_client, last_sequence).await {
-                    error!("Error when receiving an event: {}", e);
+                    log::error!("Error when receiving an event: {}", e);
                     // Check if there are unrecoverable errors
                     match e {
                         PandaError::AuthenticationFailed | PandaError::ConnectionClosed => {
@@ -71,7 +71,7 @@ pub(crate) async fn gateway_process(
                 let last_sequence = Arc::clone(&last_sequence);
                 // An error means that the connection was closed
                 if let Err(e) = to_gateway_process(cmd, &mut ws_sender, last_sequence).await {
-                    error!("Error when sending command to gateway: {}", e);
+                    log::error!("Error when sending command to gateway: {}", e);
                     // Unhandled result, TODO: Handle result
                     to_client.send(Event::Close(PandaError::ConnectionClosed)).await;
                     break;

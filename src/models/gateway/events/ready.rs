@@ -12,7 +12,7 @@ pub struct Ready {
     #[serde(skip_deserializing)]
     pub guilds: Vec<Guild>,
 
-    pub session_id: String,
+    pub session: String,
     pub shard: Option<[u64; 2]>,
 }
 

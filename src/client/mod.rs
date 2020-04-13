@@ -7,7 +7,7 @@ mod session;
 
 pub use config::Config;
 use handler::EventHandler;
-pub use session::Session;
+pub use session::SessionData;
 
 use crate::{
     error::{PandaError, Result},
@@ -19,9 +19,8 @@ use crate::{
     },
 };
 
-use async_std::{sync::Arc, task};
 use futures::{sink::SinkExt, stream::StreamExt, FutureExt};
-use std::future::Future;
+use std::{future::Future, sync::Arc};
 
 /// This macro it's used to handle all dispatched events of handler::EventHandler
 macro_rules! handle_event {
@@ -29,13 +28,12 @@ macro_rules! handle_event {
         if let Some(func) = &($client).handler.$kind {
             let session = $client.session.clone();
             let future = func(session, $event);
-            task::spawn(async move {
+            tokio::spawn(async move {
                 if let Err(e) = future.await {
                     // TODO: Add display and event name
                     log::error!("Handler error: {:?}", e);
                 };
             });
-            // task::spawn(future);
         }
     };
 }
@@ -48,7 +46,7 @@ macro_rules! impl_on_event_fn {
             $(#[$meta])*
             pub fn $fn_name<F, Fut>(&mut self, func: F)
             where
-                F: Fn(Arc<Session>, $event) -> Fut + Sync + Send + 'static,
+                F: Fn(Arc<SessionData>, $event) -> Fut + Sync + Send + 'static,
                 Fut: Future<Output=handler::EventResult> + Send + 'static
             {
                 self.handler.$event_name = Some(Box::new(move |m, r| func(m, r).boxed() ))
@@ -62,8 +60,8 @@ pub struct Client {
     handler: EventHandler,
     config: Config,
     token: String,
-    // Session will be shared between tasks, and it will be passed to the handler events
-    session: Arc<Session>,
+    // SessionData will be shared between tasks, and it will be passed to the handler events
+    session: Arc<SessionData>,
     gateway: GatewayConnection,
 }
 
@@ -83,7 +81,7 @@ impl Client {
             handler: EventHandler::new(),
             config: Config::new_default(),
             token: token.clone(),
-            session: Arc::new(Session::new(token)),
+            session: Arc::new(SessionData::new(token)),
             gateway,
         };
 
@@ -106,14 +104,14 @@ impl Client {
                 match event {
                     Event::Dispatch(d) => match d {
                         DispatchEvent::Ready(e) => {
-                            // Save session id
-                            let id = e.session_id.clone();
+                            // Save SessionData id
+                            let id = e.session.clone();
                             self.session.set_id(id).await;
 
                             handle_event!(self, ready, e);
                             // if let Some(f) = &self.handler.ready {
-                            //     let session = self.session.clone();
-                            //     task::spawn(f(session, e));
+                            //     let SessionData = self.SessionData.clone();
+                            //     task::spawn(f(SessionData, e));
                             // }
                         }
                         // Channel
@@ -248,7 +246,7 @@ impl Client {
         // Reconnect and get last sequence received, needed to send a RESUME command
         let last_sequence = self.gateway.reconnect().await;
 
-        // If session is resumable, send a RESUME command
+        // If SessionData is resumable, send a RESUME command
         if self.session.is_resumable() {
             self.resume_connect(last_sequence).await;
 
@@ -303,7 +301,7 @@ impl Client {
         let heartbeat_interval = self.gateway.heartbeat_interval;
         let to_gateway = self.gateway.to_gateway.clone();
 
-        task::spawn(async move {
+        tokio::spawn(async move {
             heartbeat::heartbeater(heartbeat_interval, to_gateway).await;
             log::info!("spawn_heartbeater exited");
         });

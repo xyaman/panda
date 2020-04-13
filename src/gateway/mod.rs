@@ -11,17 +11,19 @@ use crate::{
 
 // std
 use std::{
-    sync::atomic::{AtomicU64, Ordering},
+    sync::{
+        atomic::{AtomicU64, Ordering},
+        Arc,
+    },
     time::Duration,
 };
 
 // async
-use async_std::{sync::Arc, task};
-use async_tungstenite::async_std::connect_async;
 use futures::{
     channel::mpsc::{self, UnboundedReceiver, UnboundedSender},
     stream::StreamExt,
 };
+use tokio_tungstenite::connect_async;
 
 pub(crate) struct GatewayConnection {
     last_sequence: Arc<AtomicU64>,
@@ -36,7 +38,9 @@ impl GatewayConnection {
         let url = url::Url::parse("wss://gateway.discord.gg/?v=6&encoding=json").unwrap();
 
         // Connect to the discord gateway through a websocket
-        let (ws, _) = connect_async(url).await.map_err(|_| PandaError::CantConnectToGateway)?;
+        //let (ws, _) = connect_async(url).await.map_err(|_| PandaError::CantConnectToGateway)?;
+
+        let (ws, _) = connect_async(url).await.expect("Can't connect to gateway");
 
         // Spawn gateway process manager
         let (to_client, mut from_gateway) = mpsc::unbounded();
@@ -45,7 +49,7 @@ impl GatewayConnection {
         let last_sequence = Arc::new(AtomicU64::default());
         let last_sequence_clone = Arc::clone(&last_sequence);
 
-        task::spawn(async move {
+        tokio::spawn(async move {
             gateway_process(ws, to_client, from_client, last_sequence_clone).await;
         });
 
@@ -88,7 +92,7 @@ impl GatewayConnection {
                 }
                 Err(_e) => {
                     log::error!("Couldn't reconnect, trying in 3 seconds...");
-                    task::sleep(Duration::from_secs(3)).await;
+                    tokio::time::delay_for(Duration::from_secs(3)).await;
                 }
             }
         }

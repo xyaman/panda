@@ -1,13 +1,13 @@
-//! Session
+//! SessionData
 
 use crate::HttpClient;
 
 use std::sync::atomic::{AtomicBool, Ordering};
 
-use async_std::sync::Mutex;
+use futures::lock::Mutex;
 
-/// The struct of the current session of the bot.
-pub struct Session {
+/// The struct of the current SessionData of the bot.
+pub struct SessionData {
     id: Mutex<String>,
     pub http: HttpClient,
 
@@ -17,9 +17,9 @@ pub struct Session {
     is_resumable: AtomicBool,
 }
 
-impl Session {
+impl SessionData {
     pub(crate) fn new(token: String) -> Self {
-        Session {
+        SessionData {
             id: Mutex::new("".into()),
             http: HttpClient::new(token),
             state: (),

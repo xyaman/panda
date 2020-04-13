@@ -10,8 +10,8 @@ use resume::{Resume, ResumeContent};
 
 use super::payload::{Opcode, Payload};
 
-use async_tungstenite::tungstenite::Message as TungsteniteMessage;
 use std::env::consts::OS;
+use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
 
 #[allow(dead_code)] // TODO: Add support for Voice
 #[derive(Debug, PartialEq)]
@@ -88,11 +88,7 @@ impl Command {
 
     /// Returns a Resume command
     pub(crate) fn new_resume(token: String, session_id: String, seq: Option<u64>) -> Command {
-        let resume_content = ResumeContent {
-            token,
-            session_id,
-            seq,
-        };
+        let resume_content = ResumeContent { token, session_id, seq };
 
         let resume = Resume {
             op: Opcode::Resume,

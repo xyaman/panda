@@ -7,7 +7,11 @@ pub struct Config {
 }
 
 impl Config {
-    pub fn new_default() -> Config {
+    pub fn new() {
+        // Builder
+    }
+
+    pub(crate) fn new_default() -> Config {
         Config {
             gateway_large_treshold: 50,
             gateway_guilds_subscriptions: true,

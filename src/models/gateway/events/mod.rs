@@ -155,7 +155,7 @@ impl TryFrom<Payload> for Event {
         match p.op {
             Opcode::Dispatch => Ok(Event::Dispatch(handle_dispatch(p)?)),
             Opcode::Reconnect => Ok(Event::Reconnect),
-            Opcode::InvalidSession => {
+            Opcode::InvalidSessionData => {
                 let d = p.d.ok_or_else(|| PandaError::InvalidPayloadFormat)?;
                 let resumable = match d {
                     Value::Bool(v) => v,

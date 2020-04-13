@@ -1,12 +1,10 @@
 // models
-use super::session::Session;
+use super::session::SessionData;
 use crate::models::gateway::events::*;
 
-use std::{default::Default, error::Error};
+use std::{default::Default, error::Error, sync::Arc};
 
 // async
-use async_std::sync::Arc;
-
 // Futures
 use futures::future::BoxFuture;
 
@@ -15,7 +13,7 @@ pub(crate) type EventResult = Result<(), Box<dyn Error>>;
 /// Helper macro to create futures function trait
 macro_rules! event_trait {
     ($event: tt) => {
-        dyn Fn(Arc<Session>, $event) -> BoxFuture<'static, EventResult> + Send + Sync
+        dyn Fn(Arc<SessionData>, $event) -> BoxFuture<'static, EventResult> + Send + Sync
     };
 }
 

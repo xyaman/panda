@@ -2,9 +2,9 @@
 // * HandlerResult * it's just an alias for Result<(), Box<dyn std::error::Error>>
 
 use panda::{events::MessageCreate, models::Embed, HandlerResult, Session};
-use std::{error::Error, sync::Arc};
+use std::error::Error;
 
-#[async_std::main]
+#[tokio::main]
 async fn main() -> Result<(), Box<dyn Error>> {
     let mut client = panda::new("your token here").await?;
 
@@ -14,7 +14,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-async fn message_handler(s: Arc<Session>, msg: MessageCreate) -> HandlerResult {
+async fn message_handler(s: Session, msg: MessageCreate) -> HandlerResult {
     if msg.content() == "!embed" {
         let mut embed = Embed::new();
         embed

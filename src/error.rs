@@ -1,8 +1,8 @@
 //! # Panda error types
 //! TODO: ADD DISCORD LINKS
 
-use async_tungstenite::tungstenite::Error as TungsteniteError;
 use std::{error::Error, fmt, result::Result as StdResult};
+use tokio_tungstenite::tungstenite::Error as TungsteniteError;
 
 /// This library use a shared result type, because all functions returns the same error type
 pub type Result<T> = StdResult<T, PandaError>;
@@ -92,7 +92,7 @@ impl fmt::Display for PandaError {
             Self::HttpInvalidParameters => write!(f, "The request had invalid parameters"),
             Self::UnsuccessfulConnectionClose => write!(f, "The gateway couldn't close succesfully the connection"),
             Self::InvalidShard => write!(f, "You sent an invalid shard"),
-            Self::ShardingRequired => write!(f, "The session would have handled too many guilds - you are required to shard your connection in order to connect."),
+            Self::ShardingRequired => write!(f, "The SessionData would have handled too many guilds - you are required to shard your connection in order to connect."),
             Self::InvalidApiGatewayVersion => write!(f, "panda needs to update the gateway version"),
             Self::SerdeError(e) => write!(f, "Serde Error: {}", e),
             Self::TungsteniteError(e) => write!(f, "Tungstenite Error: {}", e),

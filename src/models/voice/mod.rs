@@ -1,5 +1,5 @@
 use crate::models::guild::GuildMember;
-use serde::{ Deserialize, Serialize };
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct VoiceState {
@@ -13,5 +13,5 @@ pub struct VoiceState {
     self_deaf: bool,
     self_mute: bool,
     self_stream: Option<bool>,
-    supress: bool
+    supress: bool,
 }

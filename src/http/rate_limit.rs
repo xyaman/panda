@@ -1,13 +1,12 @@
 use std::{
     collections::HashMap,
     default::Default,
+    sync::Arc,
     time::{Duration, SystemTime, UNIX_EPOCH},
 };
 
-use async_std::{
-    sync::{Arc, Mutex},
-    task,
-};
+use futures::lock::Mutex;
+
 use isahc::{http::Response, Body};
 
 #[derive(Default)]
@@ -36,10 +35,7 @@ impl RateLimit {
         // If not exists, we assume that it's safe to make the api call
         if let Some(b) = bucket {
             // Get current time
-            let current = SystemTime::now()
-                .duration_since(UNIX_EPOCH)
-                .unwrap()
-                .as_secs();
+            let current = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs();
             // Sleep reset time
             let difference = Duration::from_secs(b.reset.saturating_sub(current));
 
@@ -48,7 +44,7 @@ impl RateLimit {
                 // but the reset value have not been updated
                 b.remaining += 1;
             } else if b.remaining == 0 {
-                task::sleep(difference).await;
+                tokio::time::delay_for(difference).await;
 
                 // Add the default remaining
                 b.remaining = b.limit;
