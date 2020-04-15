@@ -30,4 +30,5 @@ log = "0.4.8"
 
 [dependencies.tokio]
 version = "0.2.18"
-features = ["time", "tcp"]
+#features = ["time", "tcp"]
+features = ["full"]

@@ -1,5 +1,6 @@
 //! # Panda error types
-//! TODO: ADD DISCORD LINKS
+//!
+//! Here there are some wrappers of [Discord API errors](https://discordapp.com/developers/docs/topics/opcodes-and-status-codes)
 
 use std::{error::Error, fmt, result::Result as StdResult};
 use tokio_tungstenite::tungstenite::Error as TungsteniteError;
@@ -7,7 +8,7 @@ use tokio_tungstenite::tungstenite::Error as TungsteniteError;
 /// This library use a shared result type, because all functions returns the same error type
 pub type Result<T> = StdResult<T, PandaError>;
 
-/// The error enum for this "Discord" library
+/// The error enum for Panda
 #[derive(Debug)]
 pub enum PandaError {
     /// Returned when there was an authentication error and the gateway is closed

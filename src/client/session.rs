@@ -6,23 +6,20 @@ use std::sync::atomic::{AtomicBool, Ordering};
 
 use futures::lock::Mutex;
 
-/// The struct of the current SessionData of the bot.
-pub struct SessionData {
+/// The struct of the current session of the bot.
+pub struct SessionData<S> {
     id: Mutex<String>,
     pub http: HttpClient,
-
-    #[allow(dead_code)]
-    pub(crate) state: (), // Maybe add a "global" state in the future
-
+    pub state: S,
     is_resumable: AtomicBool,
 }
 
-impl SessionData {
-    pub(crate) fn new(token: String) -> Self {
+impl<S> SessionData<S> {
+    pub(crate) fn new(token: String, state: S) -> Self {
         SessionData {
             id: Mutex::new("".into()),
             http: HttpClient::new(token),
-            state: (),
+            state,
             is_resumable: AtomicBool::new(true),
         }
     }

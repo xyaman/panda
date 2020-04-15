@@ -30,13 +30,22 @@ pub use error::PandaError;
 pub use http::HttpClient;
 
 // Re-exports
-pub type Session = std::sync::Arc<client::SessionData>;
 pub use models::gateway::events;
 
 // Types
+
+/// Alias for Result<(), Box<dyn std::error::Error>>
 pub type HandlerResult = Result<(), Box<dyn std::error::Error>>;
 
-/// Create a new panda Client with the default configs
-pub async fn new(token: impl Into<String>) -> error::Result<client::Client> {
-    client::Client::new(token).await
+/// Alias for Arc<SessionData<S>>
+pub type Session<S> = std::sync::Arc<client::SessionData<S>>;
+
+/// Create a new panda Client without state
+pub async fn new(token: impl Into<String>) -> error::Result<client::Client<()>> {
+    client::Client::<()>::new(token).await
+}
+
+/// Create a new panda Client with state
+pub async fn new_with_state<S: Sync + Send>(token: impl Into<String>, state: S) -> error::Result<client::Client<S>> {
+    client::Client::<S>::new_with_state(token, state).await
 }

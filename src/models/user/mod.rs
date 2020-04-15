@@ -1,3 +1,5 @@
+//! User related models
+
 mod activity;
 pub use activity::Activity;
 

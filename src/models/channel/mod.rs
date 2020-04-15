@@ -1,3 +1,5 @@
+//! Channel related models
+
 mod embed;
 mod message;
 mod overwrite;

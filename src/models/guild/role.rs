@@ -1,3 +1,5 @@
+//! Guild related models
+
 use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]

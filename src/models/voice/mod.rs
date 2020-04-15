@@ -1,3 +1,5 @@
+//! Voice related models
+
 use crate::models::guild::GuildMember;
 use serde::{Deserialize, Serialize};
 

@@ -5,7 +5,7 @@ mod config;
 mod handler;
 mod session;
 
-pub use config::Config;
+pub use config::{Config, ConfigBuilder};
 use handler::EventHandler;
 pub use session::SessionData;
 
@@ -46,7 +46,7 @@ macro_rules! impl_on_event_fn {
             $(#[$meta])*
             pub fn $fn_name<F, Fut>(&mut self, func: F)
             where
-                F: Fn(Arc<SessionData>, $event) -> Fut + Sync + Send + 'static,
+                F: Fn(Arc<SessionData<S>>, $event) -> Fut + Sync + Send + 'static,
                 Fut: Future<Output=handler::EventResult> + Send + 'static
             {
                 self.handler.$event_name = Some(Box::new(move |m, r| func(m, r).boxed() ))
@@ -56,18 +56,43 @@ macro_rules! impl_on_event_fn {
 }
 
 /// Client it's the main struct of Panda library, it receives and handle all discord events
-pub struct Client {
-    handler: EventHandler,
+pub struct Client<S> {
+    handler: EventHandler<S>,
     config: Config,
     token: String,
     // SessionData will be shared between tasks, and it will be passed to the handler events
-    session: Arc<SessionData>,
+    session: Arc<SessionData<S>>,
     gateway: GatewayConnection,
 }
 
-impl Client {
+impl<S: Sync + Send> Client<S> {
     /// Create a new Panda Client with the default configs
-    pub async fn new(token: impl Into<String>) -> Result<Self> {
+    pub async fn new(token: impl Into<String>) -> Result<Client<()>> {
+        // Create a new gateway connection
+        let gateway = GatewayConnection::new().await?;
+
+        // Add Bot prefix to the token if it doesn't have
+        let mut token = token.into();
+        if !token.starts_with("Bot ") {
+            token.insert_str(0, "Bot ");
+        }
+
+        let mut this = Client {
+            handler: EventHandler::new(),
+            config: Config::new_default(),
+            token: token.clone(),
+            session: Arc::new(SessionData::new(token, ())),
+            gateway,
+        };
+
+        // Send identify and spawn heartbeater
+        this.clean_connect().await;
+
+        Ok(this)
+    }
+
+    /// Create a new Panda Client with state
+    pub async fn new_with_state(token: impl Into<String>, state: S) -> Result<Self> {
         // Create a new gateway connection
         let gateway = GatewayConnection::new().await?;
 
@@ -81,7 +106,7 @@ impl Client {
             handler: EventHandler::new(),
             config: Config::new_default(),
             token: token.clone(),
-            session: Arc::new(SessionData::new(token)),
+            session: Arc::new(SessionData::new(token, state)),
             gateway,
         };
 
