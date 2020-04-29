@@ -19,6 +19,7 @@ use isahc::{
 };
 use serde::Serialize;
 
+/// It's the http client of panda, it have methods to make requests to all routes
 pub struct HttpClient {
     token: String,
     client: IsachClient,
@@ -50,11 +51,7 @@ impl HttpClient {
                     .unwrap();
 
                 // Get response
-                // TODO: ERROR WRAPPER
-                self.client
-                    .send_async(request)
-                    .await
-                    .map_err(|_| PandaError::HttpNoResponse)?
+                self.client.send_async(request).await?
             }
             Method::POST | Method::PATCH => {
                 let request = Request::builder()
@@ -66,11 +63,7 @@ impl HttpClient {
                     .unwrap();
 
                 // Get response
-                // TODO: ERROR WRAPPER
-                self.client
-                    .send_async(request)
-                    .await
-                    .map_err(|_| PandaError::HttpNoResponse)?
+                self.client.send_async(request).await?
             }
             _ => unimplemented!(),
         };
@@ -113,7 +106,7 @@ impl HttpClient {
     /// [`Channel`]: ../../panda/models/channel/struct.Channel.html
     pub async fn get_channel(&self, channel_id: impl AsRef<str>) -> Result<Channel> {
         // Create Route
-        let route = Route::<()>::get_channel(channel_id);
+        let route = Route::get_channel(channel_id);
         let mut res = self._make_request(route).await?;
 
         Ok(res.json()?)
@@ -129,7 +122,7 @@ impl HttpClient {
     pub async fn edit_channel(&self, channel_id: impl AsRef<str>, body: impl Serialize) -> Result<Channel> {
         // Create route
         let body = serde_json::to_string(&body)?;
-        let route = Route::<String>::edit_channel(channel_id, body);
+        let route = Route::edit_channel(channel_id, body);
 
         let mut res = self._make_request(route).await?;
 
@@ -145,7 +138,7 @@ impl HttpClient {
     /// [`ChannelDelete`]: ../../panda/models/gateway/events/struct.ChannelDelete.html
     pub async fn delete_channel(&self, channel_id: impl AsRef<str>) -> Result<Channel> {
         // Parse URL
-        let route = Route::<()>::delete_channel(channel_id);
+        let route = Route::delete_channel(channel_id);
 
         let mut res = self._make_request(route).await?;
 
@@ -163,7 +156,7 @@ impl HttpClient {
         limit: u8,
     ) -> Result<Vec<Message>> {
         // Create route
-        let route = Route::<()>::get_channel_messages("around", channel_id, message_id, limit);
+        let route = Route::get_channel_messages("around", channel_id, message_id, limit);
 
         let mut res = self._make_request(route).await?;
 
@@ -181,7 +174,7 @@ impl HttpClient {
         limit: u8,
     ) -> Result<Vec<Message>> {
         // Create route
-        let route = Route::<()>::get_channel_messages("before", channel_id, message_id, limit);
+        let route = Route::get_channel_messages("before", channel_id, message_id, limit);
 
         let mut res = self._make_request(route).await?;
 
@@ -199,7 +192,7 @@ impl HttpClient {
         limit: u8,
     ) -> Result<Vec<Message>> {
         // Create route
-        let route = Route::<()>::get_channel_messages("after", channel_id, message_id, limit);
+        let route = Route::get_channel_messages("after", channel_id, message_id, limit);
 
         let mut res = self._make_request(route).await?;
 
@@ -212,7 +205,7 @@ impl HttpClient {
     /// [`Message`]: ../../panda/models/channel/struct.Message.html
     pub async fn get_message(&self, channel_id: impl AsRef<str>, msg_id: impl AsRef<str>) -> Result<Message> {
         // Create route
-        let route = Route::<()>::get_channel_message(channel_id, msg_id);
+        let route = Route::get_channel_message(channel_id, msg_id);
 
         let mut res = self._make_request(route).await?;
 
@@ -234,7 +227,7 @@ impl HttpClient {
         let body = serde_json::to_string(&body)?;
 
         // Create route
-        let route = Route::<String>::create_message(channel_id, body);
+        let route = Route::create_message(channel_id, body);
         let mut res = self._make_request(route).await?;
 
         Ok(res.json()?)
@@ -254,7 +247,7 @@ impl HttpClient {
         let body = serde_json::to_string(&body)?;
 
         // Create route
-        let route = Route::<String>::create_message(channel_id, body);
+        let route = Route::create_message(channel_id, body);
 
         let mut res = self._make_request(route).await?;
 
@@ -272,7 +265,7 @@ impl HttpClient {
         emoji: impl AsRef<str>,
     ) -> Result<()> {
         // Create route
-        let route = Route::<()>::create_reaction(channel_id, message_id, emoji);
+        let route = Route::create_reaction(channel_id, message_id, emoji);
 
         let _res = self._make_request(route).await?;
 
@@ -290,7 +283,7 @@ impl HttpClient {
         emoji: impl AsRef<str>,
     ) -> Result<()> {
         // Create route
-        let route = Route::<()>::delete_own_reaction(channel_id, message_id, emoji);
+        let route = Route::delete_own_reaction(channel_id, message_id, emoji);
 
         let _res = self._make_request(route).await?;
 
@@ -311,7 +304,7 @@ impl HttpClient {
         emoji: impl AsRef<str>,
     ) -> Result<()> {
         // Create route
-        let route = Route::<()>::delete_user_reaction(channel_id, message_id, emoji, user_id);
+        let route = Route::delete_user_reaction(channel_id, message_id, emoji, user_id);
 
         let _res = self._make_request(route).await?;
 
@@ -330,7 +323,7 @@ impl HttpClient {
         message_id: impl AsRef<str>,
         emoji: impl AsRef<str>,
     ) -> Result<Vec<User>> {
-        let route = Route::<()>::get_reactions(channel_id, message_id, emoji);
+        let route = Route::get_reactions(channel_id, message_id, emoji);
 
         let mut res = self._make_request(route).await?;
 
@@ -343,7 +336,7 @@ impl HttpClient {
     /// [`Message`]: ../../panda/models/channel/struct.Message.html
     /// [`MessageReactionRemoveAll`]: ../../panda/models/gateway/events/struct.MessageReactionRemoveAll.html
     pub async fn remove_all_reactions(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
-        let route = Route::<()>::delete_all_reactions(channel_id, message_id);
+        let route = Route::delete_all_reactions(channel_id, message_id);
 
         let _res = self._make_request(route).await?;
 
@@ -361,7 +354,7 @@ impl HttpClient {
         message_id: impl AsRef<str>,
         emoji: impl AsRef<str>,
     ) -> Result<()> {
-        let route = Route::<()>::delete_all_reactions_for_emoji(channel_id, message_id, emoji);
+        let route = Route::delete_all_reactions_for_emoji(channel_id, message_id, emoji);
 
         let _res = self._make_request(route).await?;
 
@@ -380,7 +373,7 @@ impl HttpClient {
     ) -> Result<Message> {
         let body = serde_json::to_string(&body)?;
 
-        let route = Route::<String>::edit_message(channel_id, message_id, body);
+        let route = Route::edit_message(channel_id, message_id, body);
 
         let mut res = self._make_request(route).await?;
 
@@ -392,50 +385,42 @@ impl HttpClient {
     /// [`Message`]: ../../panda/models/channel/struct.Message.html
     /// [`MessageDelete`]: ../../panda/models/gateway/events/struct.MessageDelete.html
     pub async fn delete_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
-        let route = Route::<()>::delete_message(channel_id, message_id);
+        let route = Route::delete_message(channel_id, message_id);
 
         let _res = self._make_request(route).await?;
 
         Ok(())
     }
 
-    // /// Delete a a bulk of [`Message`] (2 - 100), This will also trigger [`MessageDeleteBulk`] event.
-    // ///
-    // /// [`Message`]: ../../panda/models/channel/struct.Message.html
-    // /// [`MessageDelete`]: ../../panda/models/gateway/events/struct.MessageDelete.html
-    // pub async fn delete_many_messages(&self, channel_id: impl AsRef<str>, messages: &[&str]) -> Result<()> {
-    //     // Parse URL
-    //     let uri = format!("{}/channels/{}/messages/bulk-delete", DISCORD_URL, channel_id.as_ref(),);
+    /// Delete a a bulk of [`Message`] (2 - 100), This will also trigger [`MessageDeleteBulk`] event.
+    ///
+    /// [`Message`]: ../../panda/models/channel/struct.Message.html
+    /// [`MessageDelete`]: ../../panda/models/gateway/events/struct.MessageDelete.html
+    pub async fn delete_many_messages(&self, channel_id: impl AsRef<str>, messages: &[&str]) -> Result<()> {
+        let body = serde_json::json!({ "messages": messages });
+        let body = serde_json::to_string(&body).unwrap();
 
-    //     let body = serde_json::json!({ "messages": messages });
-    //     let msg = serde_json::to_string(&body).unwrap();
+        let route = Route::bulk_delete_messages(channel_id, body);
 
-    //     // Create RateLimit Key
-    //     let rt_key = format!("channels:{}", channel_id.as_ref());
+        let _res = self._make_request(route).await?;
 
-    //     let _res = self._make_request(uri, rt_key, msg).await?;
+        Ok(())
+    }
 
-    //     Ok(())
-    // }
+    /// Edit the channel permission overwrites for a user or role in a channel. Only usable
+    /// for guild channels. Requires the **MANAGE_ROLES** permission.
+    ///
+    /// [`Message`]: ../../panda/models/channel/struct.Message.html
+    /// [`MessageDelete`]: ../../panda/models/gateway/events/struct.MessageDelete.html
+    pub async fn edit_channel_permissions(&self, _channel_id: impl AsRef<str>) -> Result<()> {
+        unimplemented!();
+        // // Create RateLimit Key
+        // let route = Route::edit_channel_permissions(channel_id, overwrite_id, body);
 
-    // /// Edit the channel permission overwrites for a user or role in a channel. Only usable
-    // /// for guild channels. Requires the **MANAGE_ROLES** permission.
-    // ///
-    // /// [`Message`]: ../../panda/models/channel/struct.Message.html
-    // /// [`MessageDelete`]: ../../panda/models/gateway/events/struct.MessageDelete.html
-    // pub async fn edit_channel_permissions(&self, _channel_id: impl AsRef<str>) -> Result<()> {
-    //     unimplemented!();
+        // let _res = self._make_request(route).await?;
 
-    //     // // Parse URL
-    //     // let uri = format!("{}/channels/{}/permissions/{}", DISCORD_URL, channel_id.as_ref(), "");
-
-    //     // // Create RateLimit Key
-    //     // let rt_key = format!("channels:{}", channel_id.as_ref());
-
-    //     // let _res = self._make_request(uri, rt_key).await?;
-
-    //     // Ok(())
-    // }
+        // Ok(())
+    }
 
     // // pub async fn get_channel_invites() {}
     // // pub async fn create_channel_invite() {}

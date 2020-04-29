@@ -117,8 +117,10 @@ impl<S: Sync + Send> Client<S> {
     }
 
     /// Create a new "discord" Client with personalized configs
-    pub fn new_with_config() {
-        unimplemented!()
+    pub fn set_config(&mut self, config: ConfigBuilder) -> Result<()> {
+        self.config = config.build();
+
+        Ok(())
     }
 
     /// Start the bot connection process

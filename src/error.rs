@@ -128,3 +128,11 @@ impl From<TungsteniteError> for PandaError {
         }
     }
 }
+
+impl From<isahc::Error> for PandaError {
+    fn from(_error: isahc::Error) -> Self { 
+        
+        // TODO: add match
+        PandaError::HttpNoResponse
+    }
+}
