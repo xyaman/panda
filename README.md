@@ -21,9 +21,6 @@ Even thought this library is usable, it still under development, so don't use fo
 > Note that this library doesn't support the 100% of discord API yet, for example voice. See `TODO list` to more information.
 
 # Installation
-
-`panda` supports a minimum of Rust 1.41
-
 ```
 cargo add panda
 ```
@@ -31,7 +28,7 @@ cargo add panda
 or in `Cargo.toml`
 
 ```
-panda = "0.3.0"
+panda = "0.4.0"
 ```
 
 # Example usage
@@ -56,9 +53,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
 # TODO list
 
-- Add config options.
 - Finish http requests.
 - Improve panda error.
-- Add Client state.
 - Add voice support.
 - Improve documentation.
