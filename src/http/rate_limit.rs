@@ -59,7 +59,7 @@ impl RateLimit {
         let headers = response.headers();
         let mut buckets_hm = self.buckets.lock().await;
 
-        // Get the bucket
+        // Get the bucket and update all entries
         let bucket = buckets_hm.entry(bucket_key).or_default();
 
         if let Some(limit) = headers.get("x-ratelimit-limit") {

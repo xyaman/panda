@@ -1,6 +1,6 @@
 use isahc::{http::Method, Body};
 
-const DISCORD_URL: &'static str = "https://discordapp.com/api";
+const DISCORD_URL: &'static str = "https://discord.com/api";
 
 macro_rules! bucket_key {
     (channel: $id: expr) => {
@@ -11,6 +11,13 @@ macro_rules! bucket_key {
     };
     (emoji: $id: expr) => {
         format!("emoji:{}", $id.as_ref());
+    };
+}
+
+#[allow(unused_macros)]
+macro_rules! url {
+    ($channel_id: expr) => {
+        format!("{}/channels/{}", DISCORD_URL, $channel_id.as_ref())
     };
 }
 
