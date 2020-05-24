@@ -41,6 +41,7 @@ impl HttpClient {
         // Check and wait if we reach the limit
         self.rate_limit.check_and_sleep(&route.bucket_key).await;
 
+        // TODO: Improve this
         let response = match route.method {
             Method::GET | Method::PUT | Method::DELETE => {
                 let request = Request::builder()

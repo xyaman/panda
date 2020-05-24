@@ -7,6 +7,7 @@ use crate::{
 use super::Embed;
 
 use serde::{Deserialize, Serialize};
+use serde_repr::*;
 
 #[derive(Debug, Deserialize, Serialize)]
 /// Represents a message sent in a channel within Discord.
@@ -32,11 +33,22 @@ pub struct Message {
     pinned: bool,
     webhook_id: Option<String>,
     #[serde(rename = "type")]
-    kind: Option<u64>, // TODO: Use const enum
+    kind: Option<Kind>,
     // activity: MessageActivity,
     // application: MessageApplication,
     // message_reference: MessageReference
     flags: Option<u64>,
+}
+#[derive(Debug, Deserialize_repr, Serialize_repr, PartialEq)]
+#[repr(u8)]
+pub enum Kind {
+    GuildText = 0,
+    DM = 1,
+    GuildVoice = 2,
+    GroupDM = 3,
+    GuildCategory = 4,
+    GuildNews = 5,
+    GuildStore = 6,
 }
 
 impl Message {
@@ -128,8 +140,8 @@ impl Message {
         self.webhook_id.as_ref().map(|v| v.as_str())
     }
 
-    pub fn kind(&self) -> Option<u64> {
-        self.kind
+    pub fn kind(&self) -> Option<&Kind> {
+        self.kind.as_ref()
     }
 
     // activity: MessageActivity,

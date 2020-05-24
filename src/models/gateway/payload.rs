@@ -76,7 +76,7 @@ impl TryFrom<TungsteniteMessage> for Payload {
                     4004 => return Err(PandaError::AuthenticationFailed),
                     // 4005 => this shouldn't happen
                     4007 => {
-                        println!("Invalid seq sended");
+                        log::error!("Panda error: Invalid seq sended");
                         return Err(PandaError::ConnectionClosed);
                     }
                     4008 => return Err(PandaError::ConnectionClosed), // TODO: Improve this

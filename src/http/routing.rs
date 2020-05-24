@@ -1,6 +1,6 @@
 use isahc::{http::Method, Body};
 
-const DISCORD_URL: &'static str = "https://discord.com/api";
+// const DISCORD_URL: &'static str = "https://discord.com/api/v6";
 
 macro_rules! bucket_key {
     (channel: $id: expr) => {
@@ -14,13 +14,11 @@ macro_rules! bucket_key {
     };
 }
 
-#[allow(unused_macros)]
-macro_rules! url {
-    ($channel_id: expr) => {
-        format!("{}/channels/{}", DISCORD_URL, $channel_id.as_ref())
+macro_rules! api_request {
+    ($url: expr, $($rest: expr),*) => {
+        format!(concat!("https://discord.com/api/v6", $url), $($rest),*)
     };
 }
-
 pub(crate) struct Route<B> {
     pub(crate) method: Method,
     pub(crate) uri: String,
@@ -33,7 +31,7 @@ impl Route<()> {
     // GET/channels/{channel.id}
     pub(crate) fn get_channel(channel_id: impl AsRef<str>) -> Self {
         let method = Method::GET;
-        let uri = format!("{}/channels/{}", DISCORD_URL, channel_id.as_ref());
+        let uri = api_request!("/channels/{}", channel_id.as_ref());
         let bucket_key = bucket_key!(channel: channel_id);
 
         Route {
@@ -47,7 +45,7 @@ impl Route<()> {
     // DELETE/channels/{channel.id}
     pub(crate) fn delete_channel(channel_id: impl AsRef<str>) -> Self {
         let method = Method::DELETE;
-        let uri = format!("{}/channels/{}", DISCORD_URL, channel_id.as_ref());
+        let uri = api_request!("/channels/{}", channel_id.as_ref());
         let bucket_key = bucket_key!(channel: channel_id);
 
         Route {
@@ -66,9 +64,8 @@ impl Route<()> {
         limit: u8,
     ) -> Self {
         let method = Method::GET;
-        let uri = format!(
-            "{}/channels/{}/messages?{}={}&limit={}",
-            DISCORD_URL,
+        let uri = api_request!(
+            "/channels/{}/messages?{}={}&limit={}",
             channel_id.as_ref(),
             kind,
             message_id.as_ref(),
@@ -87,12 +84,7 @@ impl Route<()> {
     // GET/channels/{channel.id}/messages/{message.id}
     pub(crate) fn get_channel_message(channel_id: impl AsRef<str>, msg_id: impl AsRef<str>) -> Self {
         let method = Method::GET;
-        let uri = format!(
-            "{}/channels/{}/messages/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            msg_id.as_ref()
-        );
+        let uri = api_request!("/channels/{}/messages/{}", channel_id.as_ref(), msg_id.as_ref());
         let bucket_key = bucket_key!(channel: channel_id);
 
         Route {
@@ -112,8 +104,7 @@ impl Route<()> {
         let method = Method::PUT;
         let emoji = encode(emoji);
         let uri = format!(
-            "{}/channels/{}/messages/{}/reactions/{}/@me",
-            DISCORD_URL,
+            "/channels/{}/messages/{}/reactions/{}/@me",
             channel_id.as_ref(),
             msg_id.as_ref(),
             emoji
@@ -136,9 +127,8 @@ impl Route<()> {
     ) -> Self {
         let method = Method::DELETE;
         let emoji = encode(emoji);
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions/{}/@me",
-            DISCORD_URL,
+        let uri = api_request!(
+            "/channels/{}/messages/{}/reactions/{}/@me",
             channel_id.as_ref(),
             msg_id.as_ref(),
             emoji
@@ -162,9 +152,8 @@ impl Route<()> {
     ) -> Self {
         let method = Method::DELETE;
         let emoji = encode(emoji);
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions/{}/{}",
-            DISCORD_URL,
+        let uri = api_request!(
+            "/channels/{}/messages/{}/reactions/{}/{}",
             channel_id.as_ref(),
             msg_id.as_ref(),
             emoji,
@@ -185,12 +174,11 @@ impl Route<()> {
     pub(crate) fn get_reactions(channel_id: impl AsRef<str>, msg_id: impl AsRef<str>, emoji: impl AsRef<str>) -> Self {
         let method = Method::GET;
         let emoji = encode(emoji);
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions/{}",
-            DISCORD_URL,
+        let uri = api_request!(
+            "/channels/{}/messages/{}/reactions/{}",
             channel_id.as_ref(),
             msg_id.as_ref(),
-            emoji,
+            emoji
         );
         let bucket_key = bucket_key!(emoji: channel_id);
 
@@ -205,11 +193,10 @@ impl Route<()> {
     // DELETE/channels/{channel.id}/messages/{message.id}/reactions
     pub(crate) fn delete_all_reactions(channel_id: impl AsRef<str>, msg_id: impl AsRef<str>) -> Self {
         let method = Method::DELETE;
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions",
-            DISCORD_URL,
+        let uri = api_request!(
+            "/channels/{}/messages/{}/reactions",
             channel_id.as_ref(),
-            msg_id.as_ref(),
+            msg_id.as_ref()
         );
 
         let bucket_key = bucket_key!(emoji: channel_id);
@@ -230,9 +217,8 @@ impl Route<()> {
     ) -> Self {
         let method = Method::DELETE;
         let emoji = encode(emoji);
-        let uri = format!(
-            "{}/channels/{}/messages/{}/reactions/{}",
-            DISCORD_URL,
+        let uri = api_request!(
+            "/channels/{}/messages/{}/reactions/{}",
             channel_id.as_ref(),
             msg_id.as_ref(),
             emoji
@@ -251,12 +237,7 @@ impl Route<()> {
     // DELETE/channels/{channel.id}/messages/{message.id}
     pub(crate) fn delete_message(channel_id: impl AsRef<str>, msg_id: impl AsRef<str>) -> Self {
         let method = Method::DELETE;
-        let uri = format!(
-            "{}/channels/{}/messages/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            msg_id.as_ref()
-        );
+        let uri = format!("/channels/{}/messages/{}", channel_id.as_ref(), msg_id.as_ref());
 
         let bucket_key = bucket_key!(channel: channel_id);
 
@@ -313,7 +294,7 @@ impl<B: Into<Body>> Route<B> {
     // PATCH/channels/{channel.id}
     pub(crate) fn edit_channel(channel_id: impl AsRef<str>, body: B) -> Self {
         let method = Method::PATCH;
-        let uri = format!("{}/channels/{}", DISCORD_URL, channel_id.as_ref());
+        let uri = api_request!("/channels/{}", channel_id.as_ref());
         let bucket_key = bucket_key!(channel: channel_id);
 
         Self {
@@ -327,7 +308,7 @@ impl<B: Into<Body>> Route<B> {
     // POST/channels/{channel.id}/messages
     pub(crate) fn create_message(channel_id: impl AsRef<str>, body: B) -> Self {
         let method = Method::POST;
-        let uri = format!("{}/channels/{}/messages", DISCORD_URL, channel_id.as_ref());
+        let uri = api_request!("/channels/{}/messages", channel_id.as_ref());
         let bucket_key = bucket_key!(channel: channel_id);
 
         Self {
@@ -341,12 +322,7 @@ impl<B: Into<Body>> Route<B> {
     // PATCH/channels/{channel.id}/messages/{message.id}
     pub(crate) fn edit_message(channel_id: impl AsRef<str>, msg_id: impl AsRef<str>, body: B) -> Self {
         let method = Method::PATCH;
-        let uri = format!(
-            "{}/channels/{}/messages/{}",
-            DISCORD_URL,
-            channel_id.as_ref(),
-            msg_id.as_ref()
-        );
+        let uri = format!("/channels/{}/messages/{}", channel_id.as_ref(), msg_id.as_ref());
 
         let bucket_key = bucket_key!(channel: channel_id);
 
@@ -361,7 +337,7 @@ impl<B: Into<Body>> Route<B> {
     // POST/channels/{channel.id}/messages/bulk-delete
     pub(crate) fn bulk_delete_messages(channel_id: impl AsRef<str>, body: B) -> Self {
         let method = Method::POST;
-        let uri = format!("{}/channels/{}/messages/bulk-delete", DISCORD_URL, channel_id.as_ref());
+        let uri = api_request!("/channels/{}/messages/bulk-delete", channel_id.as_ref());
 
         let bucket_key = bucket_key!(channel: channel_id);
 
@@ -381,9 +357,8 @@ impl<B: Into<Body>> Route<B> {
         body: B,
     ) -> Self {
         let method = Method::PUT;
-        let uri = format!(
-            "{}/channels/{}/permissions/{}",
-            DISCORD_URL,
+        let uri = api_request!(
+            "/channels/{}/permissions/{}",
             channel_id.as_ref(),
             overwrite_id.as_ref()
         );
