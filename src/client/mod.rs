@@ -132,14 +132,10 @@ impl<S: Sync + Send> Client<S> {
                     Event::Dispatch(d) => match d {
                         DispatchEvent::Ready(e) => {
                             // Save SessionData id
-                            let id = e.session.clone();
+                            let id = e.session_id.clone();
                             self.session.set_id(id).await;
 
                             handle_event!(self, ready, e);
-                            // if let Some(f) = &self.handler.ready {
-                            //     let SessionData = self.SessionData.clone();
-                            //     task::spawn(f(SessionData, e));
-                            // }
                         }
                         // Channel
                         DispatchEvent::ChannelCreate(e) => {

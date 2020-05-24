@@ -11,6 +11,7 @@ pub type Result<T> = StdResult<T, PandaError>;
 /// The error enum for Panda
 #[derive(Debug)]
 pub enum PandaError {
+    // TODO: Use different error enums
     /// Returned when there was an authentication error and the gateway is closed
     AuthenticationFailed,
 
@@ -74,6 +75,8 @@ pub enum PandaError {
 
     /// tungstenite
     TungsteniteError(TungsteniteError),
+
+    RuntimeError,
 }
 
 impl fmt::Display for PandaError {
@@ -99,6 +102,7 @@ impl fmt::Display for PandaError {
             Self::TungsteniteError(e) => write!(f, "Tungstenite Error: {}", e),
             Self::UnknownOpcodeSent => write!(f, "panda sent an invalid Opcode, please report the bug"),
             Self::InvalidDecodeSent => write!(f, "panda sent an invalid payload, please report the bug"),
+            Self::RuntimeError => write!(f, "runtime error")
         }
     }
 }
@@ -130,9 +134,15 @@ impl From<TungsteniteError> for PandaError {
 }
 
 impl From<isahc::Error> for PandaError {
-    fn from(_error: isahc::Error) -> Self { 
-        
+    fn from(_error: isahc::Error) -> Self {
         // TODO: add match
         PandaError::HttpNoResponse
+    }
+}
+
+impl From<tokio::task::JoinError> for PandaError {
+    fn from(_error: tokio::task::JoinError) -> Self {
+        // TODO: Improve this
+        PandaError::RuntimeError
     }
 }
