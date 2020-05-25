@@ -77,8 +77,8 @@ compile_error!(
     please use just one of them"
 );
 
-#[cfg(all(not(feature = "async-std-runtime"), not(feature = "tokio-runtime")))]
-compile_error!(
-    "You don't have a selected runtime as feature, please select `tokio-runtime` or \
-    `async-std-runtime` in Cargo.toml"
-);
+// #[cfg(all(not(feature = "async-std-runtime"), not(feature = "tokio-runtime")))]
+// compile_error!(
+//     "You don't have a selected runtime as feature, please select `tokio-runtime` or \
+//     `async-std-runtime` in Cargo.toml"
+// );
