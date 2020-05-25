@@ -3,8 +3,8 @@ use crate::error::PandaError;
 
 use std::{convert::TryFrom, io::Read};
 
+use async_tungstenite::tungstenite::Message as TungsteniteMessage;
 use flate2::read::ZlibDecoder;
-use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
 
 // Serde
 use serde::{Deserialize, Serialize};

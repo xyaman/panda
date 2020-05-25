@@ -1,4 +1,4 @@
-use crate::models::gateway::commands::Command;
+use crate::{models::gateway::commands::Command, runtime};
 
 use futures::{channel::mpsc::UnboundedSender, sink::SinkExt};
 use std::time::Duration;
@@ -8,7 +8,7 @@ use std::time::Duration;
 /// When the channel is closed, it will be terminated
 pub(crate) async fn heartbeater(heartbeat_interval: u64, mut to_gateway: UnboundedSender<Command>) {
     loop {
-        tokio::time::delay_for(Duration::from_millis(heartbeat_interval)).await;
+        runtime::sleep(Duration::from_millis(heartbeat_interval)).await;
 
         // Always check first if the channel it's open
         if to_gateway.is_closed() {

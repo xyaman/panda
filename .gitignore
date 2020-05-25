@@ -3,8 +3,7 @@
 Cargo.lock
 
 .DS_Store
-todo_list.txt
+.idea
 .vscode
 
 
-runtime

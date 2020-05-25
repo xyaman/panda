@@ -10,8 +10,8 @@ use resume::{Resume, ResumeContent};
 
 use super::payload::{Opcode, Payload};
 
+use async_tungstenite::tungstenite::Message as TungsteniteMessage;
 use std::env::consts::OS;
-use tokio_tungstenite::tungstenite::Message as TungsteniteMessage;
 
 #[allow(dead_code)] // TODO: Add support for Voice
 #[derive(Debug, PartialEq)]

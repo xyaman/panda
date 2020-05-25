@@ -5,15 +5,15 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct VoiceState {
-    guild_id: Option<String>,
-    channel_id: String,
-    user_id: String,
-    member: Option<GuildMember>,
-    session_id: String,
-    deaf: bool,
-    mute: bool,
-    self_deaf: bool,
-    self_mute: bool,
-    self_stream: Option<bool>,
-    supress: bool,
+    pub guild_id: Option<String>,
+    pub channel_id: String,
+    pub user_id: String,
+    pub member: Option<GuildMember>,
+    pub session_id: String,
+    pub deaf: bool,
+    pub mute: bool,
+    pub self_deaf: bool,
+    pub self_mute: bool,
+    pub self_stream: Option<bool>,
+    pub supress: bool,
 }

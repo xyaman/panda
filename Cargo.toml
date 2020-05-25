@@ -1,18 +1,18 @@
 [package]
 name = "panda"
-version = "0.4.2"
+version = "0.5.0"
 description = "An async Rust library for Discord"
-keywords = ["discord", "async", "tokio"]
+keywords = ["discord", "async", "tokio", "async-std"]
 authors = ["Diego Barría <dbarriapaiva@gmail.com>"]
-homepage = "https://github.com/xyaman/panda"
 repository = "https://github.com/xyaman/panda"
 readme = "README.md"
 license = "MIT OR Apache-2.0"
 edition = "2018"
 
 [features]
-# default = []
-# tokio-runtime = ["tokio", "tokio-tungstenite", "tokio-tls"]
+default = []
+tokio-runtime = ["tokio", "tokio-tls", "async-tungstenite/tokio-runtime", "async-tungstenite/tokio-tls"]
+async-std-runtime = ["async-std", "async-tls", "async-tungstenite/async-std-runtime", "async-tungstenite/async-tls"]
 
 [dependencies]
 # Serde dependencies
@@ -32,13 +32,19 @@ log = "0.4.8"
 version = "0.2.21"
 features = ["time", "tcp"]
 # features = ["full"]
-# optional = true
-
-[dependencies.tokio-tungstenite]
-version = "0.10.1"
-features = ["tls"]
-# optional = true
+optional = true
 
 [dependencies.tokio-tls]
 version = "0.3.0"
-# optional = true
+optional = true
+
+[dependencies.async-std]
+version = "1.6.0"
+optional = true
+
+[dependencies.async-tls]
+version = "0.7.0"
+optional = true
+
+[dependencies.async-tungstenite]
+version = "0.5.0"

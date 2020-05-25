@@ -2,8 +2,8 @@
 //!
 //! Here there are some wrappers of [Discord API errors](https://discordapp.com/developers/docs/topics/opcodes-and-status-codes)
 
+use async_tungstenite::tungstenite::Error as TungsteniteError;
 use std::{error::Error, fmt, result::Result as StdResult};
-use tokio_tungstenite::tungstenite::Error as TungsteniteError;
 
 /// This library use a shared result type, because all functions returns the same error type
 pub type Result<T> = StdResult<T, PandaError>;
@@ -140,6 +140,7 @@ impl From<isahc::Error> for PandaError {
     }
 }
 
+#[cfg(feature = "tokio-runtime")]
 impl From<tokio::task::JoinError> for PandaError {
     fn from(_error: tokio::task::JoinError) -> Self {
         // TODO: Improve this

@@ -1,4 +1,5 @@
 use crate::{
+    runtime::websocket::{WebSocket, WebSocketSender},
     error::{PandaError, Result},
     models::gateway::{commands::Command, events::Event, payload::Payload},
 };
@@ -22,19 +23,8 @@ use futures::{
 };
 
 // tungstenite
-use tokio_tungstenite::tungstenite::{Error as TungsteniteError, Message as TungsteniteMessage};
+use async_tungstenite::tungstenite::{Error as TungsteniteError, Message as TungsteniteMessage};
 
-// Websocket types
-type WebSocket = tokio_tungstenite::WebSocketStream<
-    tokio_tungstenite::stream::Stream<tokio::net::TcpStream, tokio_tls::TlsStream<tokio::net::TcpStream>>,
->;
-
-type WebSocketSender = futures::stream::SplitSink<
-    tokio_tungstenite::WebSocketStream<
-        tokio_tungstenite::stream::Stream<tokio::net::TcpStream, tokio_tls::TlsStream<tokio::net::TcpStream>>,
-    >,
-    TungsteniteMessage,
->;
 type TungsteniteOptionResult = Option<StdResult<TungsteniteMessage, TungsteniteError>>;
 
 /// This function manages all library/gateway commands and events

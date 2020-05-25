@@ -11,6 +11,7 @@ pub use session::SessionData;
 
 use crate::{
     error::{PandaError, Result},
+    runtime,
     gateway::{heartbeat, GatewayConnection},
     models::gateway::{
         commands::Command,
@@ -28,7 +29,8 @@ macro_rules! handle_event {
         if let Some(func) = &($client).handler.$kind {
             let session = $client.session.clone();
             let future = func(session, $event);
-            tokio::spawn(async move {
+            // CRATE ASDJASLDJAS
+            crate::runtime::spawn(async move {
                 if let Err(e) = future.await {
                     // TODO: Add display and event name
                     log::error!("Handler error: {:?}", e);
@@ -324,7 +326,7 @@ impl<S: Sync + Send> Client<S> {
         let heartbeat_interval = self.gateway.heartbeat_interval;
         let to_gateway = self.gateway.to_gateway.clone();
 
-        tokio::spawn(async move {
+        runtime::spawn(async move {
             heartbeat::heartbeater(heartbeat_interval, to_gateway).await;
             log::info!("spawn_heartbeater exited");
         });

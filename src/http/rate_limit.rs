@@ -1,3 +1,4 @@
+use crate::runtime;
 use std::{
     collections::HashMap,
     default::Default,
@@ -44,7 +45,7 @@ impl RateLimit {
                 // but the reset value have not been updated
                 b.remaining += 1;
             } else if b.remaining == 0 {
-                tokio::time::delay_for(difference).await;
+                runtime::sleep(difference).await;
 
                 // Add the default remaining
                 b.remaining = b.limit;

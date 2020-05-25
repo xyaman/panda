@@ -28,10 +28,13 @@ cargo add panda
 or in `Cargo.toml`
 
 ```
-panda = "0.4.2"
+panda = "0.5.0"
 ```
 
 # Example usage
+There is almost no difference between tokio and async versions.
+
+- Using tokio
 
 ```rust
 #[tokio::main]
@@ -40,7 +43,27 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = panda::new("your token here").await?;
 
     client.on_ready(|s, ready| async move {
-        println!("Bot {} is ready", ready.user().username());
+        println!("Bot {} is ready", ready.user.username);
+
+        Ok(())
+    });
+
+    client.start().await?;
+
+    Ok(())
+}
+```
+
+- Using async-std
+
+```rust
+#[async_std::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+
+    let mut client = panda::new("your token here").await?;
+
+    client.on_ready(|s, ready| async move {
+        println!("Bot {} is ready", ready.user.username);
 
         Ok(())
     });
@@ -57,3 +80,4 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 - Improve panda error.
 - Add voice support.
 - Improve documentation.
+- Add tests

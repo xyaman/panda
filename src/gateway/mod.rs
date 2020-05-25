@@ -5,6 +5,7 @@ use process::gateway_process;
 
 // crate imports
 use crate::{
+    runtime,
     error::{PandaError, Result},
     models::gateway::{commands::Command, events::Event},
 };
@@ -23,7 +24,7 @@ use futures::{
     channel::mpsc::{self, UnboundedReceiver, UnboundedSender},
     stream::StreamExt,
 };
-use tokio_tungstenite::connect_async;
+use crate::runtime::websocket::connect_async;
 
 pub(crate) struct GatewayConnection {
     last_sequence: Arc<AtomicU64>,
@@ -49,7 +50,7 @@ impl GatewayConnection {
         let last_sequence = Arc::new(AtomicU64::default());
         let last_sequence_clone = Arc::clone(&last_sequence);
 
-        tokio::spawn(async move {
+        runtime::spawn(async move {
             gateway_process(ws, to_client, from_client, last_sequence_clone).await;
         });
 
@@ -92,7 +93,7 @@ impl GatewayConnection {
                 }
                 Err(_e) => {
                     log::error!("Couldn't reconnect, trying in 3 seconds...");
-                    tokio::time::delay_for(Duration::from_secs(3)).await;
+                    runtime::sleep(Duration::from_secs(3)).await;
                 }
             }
         }

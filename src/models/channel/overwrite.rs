@@ -2,9 +2,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct Overwrite {
-    id: String,
+    pub id: String,
     #[serde(rename = "type")]
-    kind: String,
-    allow: u64,
-    deny: u64,
+    pub kind: String,
+    pub allow: u64,
+    pub deny: u64,
 }

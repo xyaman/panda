@@ -3,20 +3,20 @@ use std::default::Default;
 
 #[derive(Default, Debug, Deserialize, Serialize)]
 pub struct Embed {
-    title: Option<String>,
+    pub title: Option<String>,
     #[serde(rename = "type")]
-    kind: Option<String>,
-    description: Option<String>,
-    url: Option<String>,
-    timestamp: Option<String>,
-    color: Option<u64>, // TODO: COLOR ENUM
-    footer: Option<EmbedFooter>,
-    image: Option<EmbedImage>,
-    thumbnail: Option<EmbedThumbnail>,
-    video: Option<EmbedVideo>,
-    provider: Option<EmbedProvider>,
-    author: Option<EmbedAuthor>,
-    fields: Vec<EmbedField>,
+    pub kind: Option<String>,
+    pub description: Option<String>,
+    pub url: Option<String>,
+    pub timestamp: Option<String>,
+    pub color: Option<u64>, // TODO: COLOR ENUM
+    pub footer: Option<EmbedFooter>,
+    pub image: Option<EmbedImage>,
+    pub thumbnail: Option<EmbedThumbnail>,
+    pub video: Option<EmbedVideo>,
+    pub provider: Option<EmbedProvider>,
+    pub author: Option<EmbedAuthor>,
+    pub fields: Vec<EmbedField>,
 }
 
 #[derive(Default, Debug, Deserialize, Serialize)]
