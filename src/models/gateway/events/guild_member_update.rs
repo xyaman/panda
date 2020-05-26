@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GuildMemberUpdate {
-    guild_id: String,
-    roles: Vec<String>,
-    user: User,
-    nick: String,
+    pub guild_id: String,
+    pub roles: Vec<String>,
+    pub user: User,
+    pub nick: String,
 }

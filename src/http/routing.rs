@@ -237,7 +237,7 @@ impl Route<()> {
     // DELETE/channels/{channel.id}/messages/{message.id}
     pub(crate) fn delete_message(channel_id: impl AsRef<str>, msg_id: impl AsRef<str>) -> Self {
         let method = Method::DELETE;
-        let uri = format!("/channels/{}/messages/{}", channel_id.as_ref(), msg_id.as_ref());
+        let uri = api_request!("/channels/{}/messages/{}", channel_id.as_ref(), msg_id.as_ref());
 
         let bucket_key = bucket_key!(channel: channel_id);
 
@@ -246,6 +246,36 @@ impl Route<()> {
             uri,
             bucket_key,
             body: (),
+        }
+    }
+
+    // POST/channels/{channel.id}/typing
+    pub(crate) fn trigger_typing_indicator(channel_id: impl AsRef<str>) -> Route<()> {
+        let method = Method::POST;
+        let uri = api_request!("/channels/{}/typing", channel_id.as_ref());
+
+        let bucket_key = bucket_key!(channel: channel_id);
+
+        Route {
+            method,
+            uri,
+            bucket_key,
+            body: ()
+        }
+    }
+
+    // GET/channels/{channel.id}/pins
+    pub(crate) fn get_pinned_messages(channel_id: impl AsRef<str>) -> Route<()> {
+        let method = Method::GET;
+        let uri = api_request!("/channels/{}/pins", channel_id.as_ref());
+
+        let bucket_key = bucket_key!(channel: channel_id);
+
+        Route {
+            method,
+            uri,
+            bucket_key,
+            body: ()
         }
     }
 }
@@ -372,6 +402,7 @@ impl<B: Into<Body>> Route<B> {
     //         body,
     //     }
     // }
+
 }
 
 /// Used to encode emoji as a valid char in URL

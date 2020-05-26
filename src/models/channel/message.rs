@@ -29,8 +29,7 @@ pub struct Message {
     pub mention_roles: Vec<String>,
     #[serde(default)]
     pub mentions_channels: Vec<MentionChannel>,
-    #[serde(default)]
-    pub attatchments: Vec<Attachment>,
+    pub attachments: Vec<Attachment>,
     #[serde(default)]
     pub embed: Vec<Embed>,
     #[serde(default)]
@@ -58,6 +57,11 @@ pub enum Kind {
 }
 
 impl Message {
+
+    pub async fn remove(&self, http: &HttpClient) -> Result<()> {
+        http.delete_message(&self.channel_id, &self.id).await
+    }
+
     pub async fn send_message(&self, http: &HttpClient, content: impl AsRef<str>) -> Result<Message> {
         http.send_message(&self.channel_id, content).await
     }

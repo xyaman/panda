@@ -5,12 +5,11 @@ use process::gateway_process;
 
 // crate imports
 use crate::{
-    runtime,
+    runtime::{self, websocket::connect_async},
     error::{PandaError, Result},
     models::gateway::{commands::Command, events::Event},
 };
 
-// std
 use std::{
     sync::{
         atomic::{AtomicU64, Ordering},
@@ -19,12 +18,10 @@ use std::{
     time::Duration,
 };
 
-// async
 use futures::{
     channel::mpsc::{self, UnboundedReceiver, UnboundedSender},
     stream::StreamExt,
 };
-use crate::runtime::websocket::connect_async;
 
 pub(crate) struct GatewayConnection {
     last_sequence: Arc<AtomicU64>,

@@ -15,7 +15,7 @@
 //!
 //! ```toml
 //! [dependencies.panda]
-//! version = "0.5.1"
+//! version = "0.5.2"
 //! default-features = false
 //! features = ["async-std-runtime"]
 //! ```

@@ -3,6 +3,6 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct GuildEmojisUpdate {
-    guild_id: String,
-    emojis: Vec<Emoji>,
+    pub guild_id: String,
+    pub emojis: Vec<Emoji>,
 }

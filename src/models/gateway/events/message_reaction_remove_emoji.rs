@@ -3,8 +3,8 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct MessageReactionRemoveEmoji {
-    channel_id: String,
-    guild_id: Option<String>,
-    message_id: String,
-    emoji: Emoji,
+    pub channel_id: String,
+    pub guild_id: Option<String>,
+    pub message_id: String,
+    pub emoji: Emoji,
 }

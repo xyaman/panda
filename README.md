@@ -28,7 +28,7 @@ cargo add panda
 or in `Cargo.toml`
 
 ```
-panda = "0.5.1"
+panda = "0.5.2"
 ```
 
 # Configuring async runtime
@@ -37,7 +37,7 @@ to use `async-std` change the feature flags in `Cargo.toml`
 
 ```toml
 [dependencies.panda]
-version = "0.5.1"
+version = "0.5.2"
 default-features = false
 features = ["async-std-runtime"]
 ```

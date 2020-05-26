@@ -428,38 +428,28 @@ impl HttpClient {
 
     // // pub async fn delete_channel_permissions() {}
 
-    // /// Post a typing indicator for the specified channel.
-    // /// Fires a [`TypingStart`] Gateway event
-    // ///
-    // /// [`TypingStart`]: ../../panda/models/gateway/events/struct.TypingStart.html
-    // pub async fn trigger_typing(&self, channel_id: impl AsRef<str>) -> Result<()> {
-    //     // Parse URL
-    //     let uri = format!("{}/channels/{}/typing", DISCORD_URL, channel_id.as_ref());
+    /// Post a typing indicator for the specified channel.
+    /// Fires a [`TypingStart`] Gateway event
+    ///
+    /// [`TypingStart`]: ../../panda/models/gateway/events/struct.TypingStart.html
+    pub async fn trigger_typing(&self, channel_id: impl AsRef<str>) -> Result<()> {
+        let route = Route::trigger_typing_indicator(channel_id);
+        let _res = self._make_request(route).await?;
 
-    //     // Create RateLimit Key
-    //     let rt_key = format!("channels:{}", channel_id.as_ref());
+        Ok(())
+    }
 
-    //     let _res = self._make_request(uri, rt_key, ()).await?;
+    /// Returns all pinned messages in the channel as a Vec of [`Message`] objects.
+    ///
+    /// [`Message`]: ../../panda/models/channel/struct.Message.html
+    pub async fn get_pinned_messages(&self, channel_id: impl AsRef<str>) -> Result<Vec<Message>> {
 
-    //     // If an error wasn't returned, it's safe to unwrap
-    //     Ok(())
-    // }
+        let route = Route::get_pinned_messages(channel_id);
 
-    // /// Returns all pinned messages in the channel as a Vec of [`Message`] objects.
-    // ///
-    // /// [`Message`]: ../../panda/models/channel/struct.Message.html
-    // pub async fn get_pinned_messages(&self, channel_id: impl AsRef<str>) -> Result<Vec<Message>> {
-    //     // Parse URL
-    //     let uri = format!("{}/channels/{}/pins", DISCORD_URL, channel_id.as_ref());
+        let mut res = self._make_request(route).await?;
 
-    //     // Create RateLimit Key
-    //     let rt_key = format!("channels:{}", channel_id.as_ref());
-
-    //     let mut res = self._make_request(uri, rt_key).await?;
-
-    //     // If an error wasn't returned, it's safe to unwrap
-    //     Ok(res.json().unwrap())
-    // }
+        Ok(res.json()?)
+    }
 
     // /// Pin a message in a channel. Requires the **MANAGE_MESSAGES** permission
     // pub async fn pin_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
