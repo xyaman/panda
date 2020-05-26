@@ -6,8 +6,8 @@ mod handler;
 mod session;
 
 pub use config::{Config, ConfigBuilder};
-use handler::EventHandler;
 pub use session::SessionData;
+use handler::EventHandler;
 
 use crate::{
     error::{PandaError, Result},
@@ -332,6 +332,7 @@ impl<S: Sync + Send> Client<S> {
         });
     }
 
+    // Implementations of all on_DiscordEvent
     impl_on_event_fn! {
         /// Set the handler function for [`Ready`] event
         ///

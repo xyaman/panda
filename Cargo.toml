@@ -1,6 +1,6 @@
 [package]
 name = "panda"
-version = "0.5.0"
+version = "0.5.1"
 description = "An async Rust library for Discord"
 keywords = ["discord", "async", "tokio", "async-std"]
 authors = ["Diego Barría <dbarriapaiva@gmail.com>"]
@@ -30,8 +30,8 @@ log = "0.4.8"
 
 [dependencies.tokio]
 version = "0.2.21"
-#features = ["time", "tcp"]
-features = ["full"]
+features = ["time", "tcp"]
+# features = ["full"]
 optional = true
 
 [dependencies.tokio-tls]

@@ -1,13 +1,21 @@
 //! Channel related models
 
+mod attachment;
 mod embed;
 mod message;
+mod message_application;
+mod message_reference;
 mod overwrite;
+mod reaction;
 
 // Re-exports
+pub use attachment::Attachment;
 pub use embed::{Embed, EmbedAuthor, EmbedField, EmbedFooter, EmbedImage, EmbedProvider, EmbedThumbnail, EmbedVideo};
 pub use message::Message;
+pub use message_application::MessageApplication;
+pub use message_reference::MessageReference;
 pub use overwrite::Overwrite;
+pub use reaction::Reaction;
 
 use crate::models::user::*;
 
@@ -15,12 +23,13 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Channel {
-    pub d: String,
+    pub id: String,
     #[serde(rename = "type")]
     pub kind: u64,
     pub guild_id: Option<String>,
     pub position: Option<u64>,
-    //permission_overwrites: Option<Overwrite>,
+    #[serde(default)]
+    pub permission_overwrites: Vec<Overwrite>,
     pub name: Option<String>,
     pub topic: Option<String>,
     pub nsfw: Option<bool>,
@@ -39,4 +48,13 @@ pub struct Channel {
 
     pub parent_id: Option<String>,
     pub last_pin_timestamp: Option<String>,
+}
+
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+pub struct MentionChannel {
+    id: String,
+    guild_id: String,
+    #[serde(rename = "type")]
+    kind: u64, // TODO
+    name: String,
 }

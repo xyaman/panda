@@ -351,27 +351,27 @@ impl<B: Into<Body>> Route<B> {
 
     // PUT/channels/{channel.id}/permissions/{overwrite.id}
     // TODO: Check {overwrite.id}
-    pub(crate) fn edit_channel_permissions(
-        channel_id: impl AsRef<str>,
-        overwrite_id: impl AsRef<str>,
-        body: B,
-    ) -> Self {
-        let method = Method::PUT;
-        let uri = api_request!(
-            "/channels/{}/permissions/{}",
-            channel_id.as_ref(),
-            overwrite_id.as_ref()
-        );
+    // pub(crate) fn edit_channel_permissions(
+    //     channel_id: impl AsRef<str>,
+    //     overwrite_id: impl AsRef<str>,
+    //     body: B,
+    // ) -> Self {
+    //     let method = Method::PUT;
+    //     let uri = api_request!(
+    //         "/channels/{}/permissions/{}",
+    //         channel_id.as_ref(),
+    //         overwrite_id.as_ref()
+    //     );
 
-        let bucket_key = bucket_key!(channel: channel_id);
+    //     let bucket_key = bucket_key!(channel: channel_id);
 
-        Route {
-            method,
-            uri,
-            bucket_key,
-            body,
-        }
-    }
+    //     Route {
+    //         method,
+    //         uri,
+    //         bucket_key,
+    //         body,
+    //     }
+    // }
 }
 
 /// Used to encode emoji as a valid char in URL

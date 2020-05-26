@@ -3,6 +3,7 @@ use std::default::Default;
 
 #[derive(Default, Debug, Deserialize, Serialize)]
 pub struct Embed {
+    /// Title of the embed
     pub title: Option<String>,
     #[serde(rename = "type")]
     pub kind: Option<String>,

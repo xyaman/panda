@@ -4,7 +4,7 @@ use crate::{
     models::{guild::GuildMember, user::User},
 };
 
-use super::Embed;
+use super::{Embed, MentionChannel, MessageReference, Attachment, Reaction, MessageApplication};
 
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
@@ -12,7 +12,10 @@ use serde_repr::*;
 #[derive(Debug, Deserialize, Serialize)]
 /// Represents a message sent in a channel within Discord.
 pub struct Message {
+    /// ID of the message
     pub id: String,
+    
+    /// ID of the channel where the message was sent
     pub channel_id: String,
     pub guild_id: Option<String>,
     pub author: User,
@@ -24,19 +27,22 @@ pub struct Message {
     pub mention_everyone: bool,
     pub mentions: Vec<User>,
     pub mention_roles: Vec<String>,
-     // mentions_channels: Vec<ChannelMention>,
-     // attatchments: Vec<Attachtment>,
+    #[serde(default)]
+    pub mentions_channels: Vec<MentionChannel>,
+    #[serde(default)]
+    pub attatchments: Vec<Attachment>,
     #[serde(default)]
     pub embed: Vec<Embed>,
-    // reactions: Vec<Reactions>
+    #[serde(default)]
+    pub reactions: Vec<Reaction>,
     pub nonce: Option<String>,
     pub pinned: bool,
     pub webhook_id: Option<String>,
     #[serde(rename = "type")]
     pub kind: Option<Kind>,
     // activity: MessageActivity,
-     // application: MessageApplication,
-     // message_reference: MessageReference
+    pub application: Option<MessageApplication>,
+    pub message_reference: Option<MessageReference>,
     pub flags: Option<u64>,
 }
 #[derive(Debug, Deserialize_repr, Serialize_repr, PartialEq)]

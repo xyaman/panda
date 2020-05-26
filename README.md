@@ -28,13 +28,23 @@ cargo add panda
 or in `Cargo.toml`
 
 ```
-panda = "0.5.0"
+panda = "0.5.1"
 ```
 
-# Example usage
-There is almost no difference between tokio and async versions.
+# Configuring async runtime
+panda supports `tokio` and `async-std` runtimes, by default it uses `tokio`,
+to use `async-std` change the feature flags in `Cargo.toml`
 
-- Using tokio
+```toml
+[dependencies.panda]
+version = "0.5.1"
+default-features = false
+features = ["async-std-runtime"]
+```
+
+
+# Example usage
+It will print the bot name when the bot is ready.
 
 ```rust
 #[tokio::main]
@@ -54,25 +64,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 }
 ```
 
-- Using async-std
-
-```rust
-#[async_std::main]
-async fn main() -> Result<(), Box<dyn std::error::Error>> {
-
-    let mut client = panda::new("your token here").await?;
-
-    client.on_ready(|s, ready| async move {
-        println!("Bot {} is ready", ready.user.username);
-
-        Ok(())
-    });
-
-    client.start().await?;
-
-    Ok(())
-}
-```
+All events are in the [Discord Documentation](https://discord.com/developers/docs/topics/gateway#commands-and-events), and to use it in client, you have to use `client.on_` plus 
+the event in snake case.
 
 # TODO list
 
