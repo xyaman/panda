@@ -10,7 +10,7 @@ license = "MIT OR Apache-2.0"
 edition = "2018"
 
 [features]
-default = []
+default = ["tokio-runtime"]
 tokio-runtime = ["tokio", "tokio-tls", "async-tungstenite/tokio-runtime", "async-tungstenite/tokio-tls"]
 async-std-runtime = ["async-std", "async-tls", "async-tungstenite/async-std-runtime", "async-tungstenite/async-tls"]
 
@@ -30,8 +30,8 @@ log = "0.4.8"
 
 [dependencies.tokio]
 version = "0.2.21"
-features = ["time", "tcp"]
-# features = ["full"]
+#features = ["time", "tcp"]
+features = ["full"]
 optional = true
 
 [dependencies.tokio-tls]
