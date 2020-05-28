@@ -69,4 +69,8 @@ impl Message {
     pub async fn send_embed(&self, http: &HttpClient, embed: super::Embed) -> Result<Message> {
         http.send_embed(&self.channel_id, embed).await
     }
+
+    pub async fn add_reaction(&self, http: &HttpClient, emoji: impl AsRef<str>) -> Result<()> {
+        http.add_reaction(&self.channel_id, &self.id, emoji).await
+    }
 }

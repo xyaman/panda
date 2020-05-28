@@ -5,11 +5,12 @@ use std::{
     task::{Context, Poll},
 };
 
+/// Used with runtime::sleep()
 pub(crate) enum Delay {
     #[cfg(feature = "tokio-runtime")]
     Tokio(tokio::time::Delay),
 
-    #[cfg(feature = "async-std-runtime")]
+    #[cfg(feature = "async-std-runtime" /*, feature = "async-std-native-tls"*/)]
     AsyncStd(Pin<Box<dyn Future<Output = ()> + Send + Sync + 'static>>),
 }
 
@@ -21,7 +22,7 @@ impl Future for Delay {
             #[cfg(feature = "tokio-runtime")]
             Self::Tokio(ref mut delay) => Pin::new(delay).poll(cx),
 
-            #[cfg(feature = "async-std-runtime")]
+            #[cfg(feature = "async-std-runtime" /*, feature = "async-std-native-tls"*/)]
             Self::AsyncStd(ref mut handle) => Pin::new(handle).poll(cx),
         }
     }

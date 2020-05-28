@@ -10,7 +10,7 @@ pub(crate) enum JoinHandle<T> {
     #[cfg(feature = "tokio-runtime")]
     Tokio(tokio::task::JoinHandle<T>),
 
-    #[cfg(feature = "async-std-runtime")]
+    #[cfg(feature = "async-std-runtime" /*, feature = "async-std-native-tls"*/)]
     AsyncStd(async_std::task::JoinHandle<T>),
 }
 
@@ -22,7 +22,7 @@ impl<T> Future for JoinHandle<T> {
             #[cfg(feature = "tokio-runtime")]
             Self::Tokio(ref mut handle) => Pin::new(handle).poll(cx).map_err(|f| f.into()),
 
-            #[cfg(feature = "async-std-runtime")]
+            #[cfg(feature = "async-std-runtime" /*, feature = "async-std-native-tls"*/)]
             Self::AsyncStd(ref mut handle) => Pin::new(handle).poll(cx).map(Ok),
         }
     }

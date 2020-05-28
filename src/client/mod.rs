@@ -1,11 +1,11 @@
 //! # Panda Client
 
 //modules
-mod config;
+pub mod config;
 mod handler;
 mod session;
 
-pub use config::{Config, ConfigBuilder};
+pub use config::Config;
 pub use session::SessionData;
 use handler::EventHandler;
 
@@ -119,7 +119,7 @@ impl<S: Sync + Send> Client<S> {
     }
 
     /// Create a new "discord" Client with personalized configs
-    pub fn set_config(&mut self, config: ConfigBuilder) -> Result<()> {
+    pub fn set_config(&mut self, config: config::ConfigBuilder) -> Result<()> {
         self.config = config.build();
 
         Ok(())

@@ -10,9 +10,11 @@ license = "MIT OR Apache-2.0"
 edition = "2018"
 
 [features]
+#default = ["tokio-runtime"]
 default = ["tokio-runtime"]
 tokio-runtime = ["tokio", "tokio-tls", "async-tungstenite/tokio-runtime", "async-tungstenite/tokio-tls"]
 async-std-runtime = ["async-std", "async-tls", "async-tungstenite/async-std-runtime", "async-tungstenite/async-tls"]
+# async-std-native-tls = ["async-std", "async-native-tls", "async-tungstenite/async-native-tls"]
 
 [dependencies]
 # Serde dependencies
@@ -46,5 +48,26 @@ optional = true
 version = "0.7.0"
 optional = true
 
+# [dependencies.async-native-tls]
+# version = "0.3.0"
+# optional = true
+
 [dependencies.async-tungstenite]
 version = "0.5.0"
+
+[[example]]
+name = "ping_pong"
+required-features = ["tokio/macros"]
+
+[[example]]
+name = "embed"
+required-features = ["tokio/macros"]
+
+[[example]]
+name = "config"
+required-features = ["tokio/macros"]
+
+[[example]]
+name = "state"
+required-features = ["tokio/macros"]
+

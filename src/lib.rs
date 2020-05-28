@@ -50,8 +50,9 @@ macro_rules! define_cfg {
     ($($def: item)+) => {
         $(
             #[cfg(any(
-                all(feature="tokio-runtime", not(feature="async-std-runtime")),
-                all(feature="async-std-runtime", not(feature="tokio-runtime"))
+                all(feature="tokio-runtime", not(feature="async-std-runtime")), /*, not(feature = "async-std-native-tls")) */
+                all(feature="async-std-runtime", not(feature="tokio-runtime")) /*, not(feature = "async-std-native-tls")) */
+                // all(feature="async-std-native-tls", not(feature="tokio-runtime"), not(feature = "async-std-runtime"))
             ))]
             $def
         )+

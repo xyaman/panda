@@ -15,7 +15,7 @@ where
     #[cfg(feature = "tokio-runtime")]
     return JoinHandle::Tokio(tokio::spawn(future));
 
-    #[cfg(feature = "async-std-runtime")]
+    #[cfg(feature = "async-std-runtime" /*, feature = "async-std-native-tls"*/)]
     return JoinHandle::AsyncStd(async_std::task::spawn(future));
 }
 
@@ -23,6 +23,6 @@ pub(crate) fn sleep(duration: Duration) -> delay::Delay {
     #[cfg(feature = "tokio-runtime")]
     return Delay::Tokio(tokio::time::delay_for(duration));
 
-    #[cfg(feature = "async-std-runtime")]
+    #[cfg(feature = "async-std-runtime" /*, feature = "async-std-native-tls"*/)]
     return Delay::AsyncStd(Box::pin(async_std::task::sleep(duration)));
 }

@@ -103,7 +103,7 @@ impl Route<()> {
     ) -> Self {
         let method = Method::PUT;
         let emoji = encode(emoji);
-        let uri = format!(
+        let uri = api_request!(
             "/channels/{}/messages/{}/reactions/{}/@me",
             channel_id.as_ref(),
             msg_id.as_ref(),
@@ -260,7 +260,7 @@ impl Route<()> {
             method,
             uri,
             bucket_key,
-            body: ()
+            body: (),
         }
     }
 
@@ -275,7 +275,7 @@ impl Route<()> {
             method,
             uri,
             bucket_key,
-            body: ()
+            body: (),
         }
     }
 }
@@ -352,7 +352,7 @@ impl<B: Into<Body>> Route<B> {
     // PATCH/channels/{channel.id}/messages/{message.id}
     pub(crate) fn edit_message(channel_id: impl AsRef<str>, msg_id: impl AsRef<str>, body: B) -> Self {
         let method = Method::PATCH;
-        let uri = format!("/channels/{}/messages/{}", channel_id.as_ref(), msg_id.as_ref());
+        let uri = api_request!("/channels/{}/messages/{}", channel_id.as_ref(), msg_id.as_ref());
 
         let bucket_key = bucket_key!(channel: channel_id);
 
@@ -402,7 +402,6 @@ impl<B: Into<Body>> Route<B> {
     //         body,
     //     }
     // }
-
 }
 
 /// Used to encode emoji as a valid char in URL
