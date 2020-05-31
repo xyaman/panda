@@ -5,5 +5,5 @@ Cargo.lock
 .DS_Store
 .idea
 .vscode
-
+status.rs
 

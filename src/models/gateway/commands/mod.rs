@@ -8,7 +8,11 @@ use heartbeat::Heartbeat;
 mod resume;
 use resume::{Resume, ResumeContent};
 
+mod status_update;
+use status_update::StatusUpdatePayload;
+
 use super::payload::{Opcode, Payload};
+use crate::models::user;
 
 use async_tungstenite::tungstenite::Message as TungsteniteMessage;
 use std::env::consts::OS;
@@ -21,7 +25,7 @@ pub(crate) enum Command {
     Heartbeat(Heartbeat),
     RequestGuildMembers(Payload),
     UpdateVoiceState(Payload),
-    UpdateStatus(Payload),
+    StatusUpdate(StatusUpdatePayload),
     Close,
 }
 
@@ -42,6 +46,10 @@ impl Command {
             }
             Self::Resume(r) => {
                 let cmd_str = serde_json::to_string(&r).unwrap();
+                TungsteniteMessage::Text(cmd_str)
+            }
+            Self::StatusUpdate(p) => {
+                let cmd_str = serde_json::to_string(&p).unwrap();
                 TungsteniteMessage::Text(cmd_str)
             }
             _ => todo!(),
@@ -96,5 +104,14 @@ impl Command {
         };
 
         Command::Resume(resume)
+    }
+
+    pub(crate) fn new_status_update(status_update: user::StatusUpdate) -> Command {
+        let status_update = StatusUpdatePayload {
+            op: Opcode::StatusUpdate,
+            d: status_update,
+        };
+
+        Command::StatusUpdate(status_update)
     }
 }

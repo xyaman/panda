@@ -73,6 +73,10 @@ impl<S: Sync + Send> Client<S> {
         // Create a new gateway connection
         let gateway = GatewayConnection::new().await?;
 
+        // Get a channel (to_gateway) to able session send commands
+        // like RequestGuildMembers, UpdateStatus, etc..
+        let to_gateway_ch = gateway.to_gateway.clone();
+
         // Add Bot prefix to the token if it doesn't have
         let mut token = token.into();
         if !token.starts_with("Bot ") {
@@ -83,7 +87,7 @@ impl<S: Sync + Send> Client<S> {
             handler: EventHandler::new(),
             config: Config::new_default(),
             token: token.clone(),
-            session: Arc::new(SessionData::new(token, ())),
+            session: Arc::new(SessionData::new(token, (), to_gateway_ch)),
             gateway,
         };
 
@@ -98,6 +102,10 @@ impl<S: Sync + Send> Client<S> {
         // Create a new gateway connection
         let gateway = GatewayConnection::new().await?;
 
+        // Get a channel (to_gateway) to able session send commands
+        // like RequestGuildMembers, UpdateStatus, etc..
+        let to_gateway_ch = gateway.to_gateway.clone();
+
         // Add Bot prefix to the token if it doesn't have
         let mut token = token.into();
         if !token.starts_with("Bot ") {
@@ -108,7 +116,7 @@ impl<S: Sync + Send> Client<S> {
             handler: EventHandler::new(),
             config: Config::new_default(),
             token: token.clone(),
-            session: Arc::new(SessionData::new(token, state)),
+            session: Arc::new(SessionData::new(token, state, to_gateway_ch)),
             gateway,
         };
 

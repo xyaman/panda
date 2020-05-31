@@ -87,9 +87,10 @@ pub use ready::Ready;
 use super::payload::{Opcode, Payload};
 use crate::error::{PandaError, Result};
 
+use serde_json::Value;
 use std::convert::TryFrom;
 
-use serde_json::Value;
+// TODO: JSON PARSE ERROR MACRO
 
 #[derive(Debug)]
 pub(crate) enum Event {

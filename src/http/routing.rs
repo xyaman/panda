@@ -278,6 +278,36 @@ impl Route<()> {
             body: (),
         }
     }
+
+    // PUT/channels/{channel.id}/pins/{message.id}
+    pub(crate) fn add_pinned_channel_message(channel_id: impl AsRef<str>, msg_id: impl AsRef<str>) -> Route<()> {
+        let method = Method::PUT;
+        let uri = api_request!("/channels/{}/pins/{}", channel_id.as_ref(), msg_id.as_ref());
+
+        let bucket_key = bucket_key!(channel: channel_id);
+
+        Route {
+            method,
+            uri,
+            bucket_key,
+            body: (),
+        }
+    }
+
+    // DELETE/channels/{channel.id}/pins/{message.id}
+    pub(crate) fn delete_pinned_channel_message(channel_id: impl AsRef<str>, msg_id: impl AsRef<str>) -> Route<()> {
+        let method = Method::DELETE;
+        let uri = api_request!("/channels/{}/pins/{}", channel_id.as_ref(), msg_id.as_ref());
+
+        let bucket_key = bucket_key!(channel: channel_id);
+
+        Route {
+            method,
+            uri,
+            bucket_key,
+            body: (),
+        }
+    }
 }
 
 // Routes with body

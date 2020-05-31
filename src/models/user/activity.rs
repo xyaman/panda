@@ -2,7 +2,7 @@ use crate::models::emoji::Emoji;
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
 
-#[derive(Debug, Deserialize, Serialize)]
+#[derive(Debug, Deserialize, Serialize, PartialEq)]
 pub struct Activity {
     pub name: String,
     #[serde(rename = "type")]

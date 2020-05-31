@@ -20,12 +20,13 @@ pub use reaction::Reaction;
 use crate::models::user::*;
 
 use serde::{Deserialize, Serialize};
+use serde_repr::*;
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct Channel {
     pub id: String,
     #[serde(rename = "type")]
-    pub kind: u64,
+    pub kind: ChannelKind,
     pub guild_id: Option<String>,
     pub position: Option<u64>,
     #[serde(default)]
@@ -57,4 +58,16 @@ pub struct MentionChannel {
     #[serde(rename = "type")]
     kind: u64, // TODO
     name: String,
+}
+
+#[derive(Clone, Debug, Deserialize_repr, Serialize_repr, PartialEq)]
+#[repr(u8)]
+pub enum ChannelKind {
+    GuildText = 0,
+    DM = 1,
+    GuildVoice = 2,
+    GroupDM = 3,
+    GuildCategory = 4,
+    GuildNews = 5,
+    GuildStore = 6,
 }

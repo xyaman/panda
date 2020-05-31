@@ -444,6 +444,8 @@ impl HttpClient {
     /// [`Message`]: ../../panda/models/channel/struct.Message.html
     pub async fn get_pinned_messages(&self, channel_id: impl AsRef<str>) -> Result<Vec<Message>> {
 
+        // TODO: Returns a 204 empty response on success.
+
         let route = Route::get_pinned_messages(channel_id);
 
         let mut res = self._make_request(route).await?;
@@ -451,43 +453,30 @@ impl HttpClient {
         Ok(res.json()?)
     }
 
-    // /// Pin a message in a channel. Requires the **MANAGE_MESSAGES** permission
-    // pub async fn pin_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
-    //     // Parse URL
-    //     let uri = format!(
-    //         "{}/channels/{}/pins/{}",
-    //         DISCORD_URL,
-    //         channel_id.as_ref(),
-    //         message_id.as_ref()
-    //     );
+    /// Pin a message in a channel. Requires the **MANAGE_MESSAGES** permission
+    /// **The max pinned messages is 50.**
+    pub async fn pin_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
 
-    //     // Create RateLimit Key
-    //     let rt_key = format!("channels:{}", channel_id.as_ref());
+        // TODO: Returns a 204 empty response on success.
 
-    //     let _res = self.__make_request(uri, rt_key).await?;
+        let route = Route::add_pinned_channel_message(channel_id, message_id);
 
-    //     // If an error wasn't returned, it's safe to unwrap
-    //     Ok(())
-    // }
+        let _ = self._make_request(route).await?;
 
-    // /// Pin a message in a channel. Requires the **MANAGE_MESSAGES** permission.
-    // pub async fn unpin_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
-    //     // Parse URL
-    //     let uri = format!(
-    //         "{}/channels/{}/pins/{}",
-    //         DISCORD_URL,
-    //         channel_id.as_ref(),
-    //         message_id.as_ref()
-    //     );
+        Ok(())
+    }
 
-    //     // Create RateLimit Key
-    //     let rt_key = format!("channels:{}", channel_id.as_ref());
+    /// Pin a message in a channel. Requires the **MANAGE_MESSAGES** permission.
+    pub async fn unpin_message(&self, channel_id: impl AsRef<str>, message_id: impl AsRef<str>) -> Result<()> {
 
-    //     let _res = self.___make_request(uri, rt_key).await?;
+        // TODO: Returns a 204 empty response on success.
 
-    //     // If an error wasn't returned, it's safe to unwrap
-    //     Ok(())
-    // }
+        let route = Route::delete_pinned_channel_message(channel_id, message_id);
+
+        let _ = self._make_request(route).await?;
+
+        Ok(())
+    }
 
     // PUT/channels/{channel.id}/recipients/{user.id}
 

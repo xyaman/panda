@@ -5,6 +5,10 @@ All notable changes to this project will be documented in this file.
 ### Added
 - `Message.add_reaction()`, alias for `http.add_message_reaction()`
 
+
+### Fixes
+- PresenceUpdate event now works properly
+
 ## [0.5.2] - 2020-05-26
 ### Added
 - `Message.remove()`, alias for `http.delete_message()`
