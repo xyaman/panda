@@ -473,7 +473,7 @@ impl<S: Sync + Send> Client<S> {
         /// Set the handler function for [`MessageDeleteBulk`] event
         ///
         /// [`MessageDeleteBulk`]: ../models/gateway/events/struct.MessageDeleteBulk.html
-        pub fn on_message_delete_bulk(message_delete, MessageDelete);
+        pub fn on_message_delete_bulk(message_delete_bulk, MessageDeleteBulk);
 
         /// Set the handler function for [`MessageReactionAdd`] event
         ///
