@@ -2,7 +2,9 @@ use crate::models::emoji::Emoji;
 use serde::{Deserialize, Serialize};
 use serde_repr::*;
 
-#[derive(Debug, Deserialize, Serialize, PartialEq)]
+use std::default::Default;
+
+#[derive(Debug, Deserialize, Serialize, PartialEq, Default)]
 pub struct Activity {
     pub name: String,
     #[serde(rename = "type")]
@@ -27,4 +29,20 @@ pub enum ActivityKind {
     Streaming = 1,
     Listening = 2,
     Custom = 4,
+}
+
+impl Default for ActivityKind {
+    fn default() -> Self {
+        Self::Game
+    }
+}
+
+impl Activity {
+    pub fn new(kind: ActivityKind, name: impl Into<String>) -> Self {
+        Self {
+            name: name.into(),
+            kind,
+            ..Default::default()
+        }
+    }
 }
