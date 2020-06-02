@@ -3,8 +3,8 @@
 mod activity;
 mod status_update;
 
-pub use activity::Activity;
-pub use status_update::StatusUpdate;
+pub use activity::{Activity, ActivityKind};
+pub use status_update::{Status, StatusUpdate};
 
 use serde::{Deserialize, Serialize};
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
