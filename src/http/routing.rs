@@ -249,6 +249,20 @@ impl Route<()> {
         }
     }
 
+    // GET/channels/{channel.id}/invites
+    pub(crate) fn get_channel_invite(channel_id: impl AsRef<str>) -> Self {
+        let method = Method::GET;
+        let uri = api_request!("/channels/{}/invites", channel_id.as_ref());
+        let bucket_key = bucket_key!(channel: channel_id);
+
+        Route {
+            method,
+            uri,
+            bucket_key,
+            body: ()
+        }
+    }
+
     // POST/channels/{channel.id}/typing
     pub(crate) fn trigger_typing_indicator(channel_id: impl AsRef<str>) -> Route<()> {
         let method = Method::POST;

@@ -423,7 +423,14 @@ impl HttpClient {
         // Ok(())
     }
 
-    // // pub async fn get_channel_invites() {}
+    pub async fn get_channel_invites(&self, channel_id: impl AsRef<str>) -> Result<()> {
+        let route = Route::get_channel_invite(channel_id);
+        let res = self._make_request(route).await?;
+
+        dbg!(res);
+
+        Ok(())
+    }
     // // pub async fn create_channel_invite() {}
 
     // // pub async fn delete_channel_permissions() {}

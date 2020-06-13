@@ -31,8 +31,8 @@ pub enum PandaError {
     /// Returned when panda sent an invalid payload
     InvalidDecodeSent,
 
-    /// Returned when "discord" recevies a invalid message format
-    InvalidPayloadFormat,
+    /// Returned when panda recevies a invalid message format
+    InvalidPayloadFormat(&'static str),
 
     /// Returned when "discord" receives a unexpected message format like IDENTIFY
     UnexpectedPayloadReceived,
@@ -86,7 +86,7 @@ impl fmt::Display for PandaError {
             Self::CantConnectToGateway => write!(f, "'Discord' couldn't connect to gateway"),
             Self::ConnectionClosed => write!(f, "Connection closed unexpectedly"),
             Self::UnknownPayloadReceived => write!(f, "Unknown payload format received"),
-            Self::InvalidPayloadFormat => write!(f, "Invalid payload format received",),
+            Self::InvalidPayloadFormat(p) => write!(f, "Invalid payload format received: {}", p),
             Self::UnexpectedPayloadReceived => write!(f, "Unexpected payload received"),
             Self::WrongCompression => write!(f, "Wrong zlib compression"),
             Self::HttpNoResponse => write!(f, "Discord HTTP API didn't response"),
@@ -115,7 +115,8 @@ impl From<serde_json::Error> for PandaError {
         // InvalidPayloadFormat
 
         if error.is_data() {
-            return PandaError::InvalidPayloadFormat;
+            // TODO: cHANGE THIS
+            return PandaError::InvalidPayloadFormat("");
         }
 
         PandaError::SerdeError(error)

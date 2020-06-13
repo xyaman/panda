@@ -4,6 +4,7 @@ use panda::models::{Activity, ActivityKind, StatusUpdate};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     let mut client = panda::new("your token here").await?;
 
+    // Change status when bot is ready and connected
     client.on_ready(|s, _| async move {
         // Create a new status struct
         let mut status = StatusUpdate::new();
@@ -20,6 +21,8 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         Ok(())
     });
 
+    // Start the bot
     client.start().await?;
+
     Ok(())
 }

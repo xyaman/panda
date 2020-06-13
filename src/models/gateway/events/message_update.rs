@@ -1,15 +1,12 @@
-use crate::models::channel::Message;
+use crate::models::Embed;
 use serde::{Deserialize, Serialize};
 
-use std::ops::Deref;
-
 #[derive(Debug, Deserialize, Serialize)]
-pub struct MessageUpdate(pub Message);
+pub struct MessageUpdate {
+    pub id: String,
+    pub channel_id: String,
+    pub guild_id: Option<String>,
 
-impl Deref for MessageUpdate {
-    type Target = Message;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
+    #[serde(default)]
+    pub embeds: Vec<Embed>,
 }

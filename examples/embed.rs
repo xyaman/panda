@@ -16,7 +16,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
 async fn message_handler(s: Session<()>, msg: MessageCreate) -> HandlerResult {
     if msg.content == "!embed" {
+        // Create a new embed
         let mut embed = Embed::new();
+
+        // Add content
         embed
             .set_title("Some title")
             .set_description("Some description here")

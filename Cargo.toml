@@ -1,6 +1,6 @@
 [package]
 name = "panda"
-version = "0.5.2"
+version = "0.5.3"
 description = "An async Rust library for Discord"
 keywords = ["discord", "async", "tokio", "async-std"]
 authors = ["Diego Barría <dbarriapaiva@gmail.com>"]

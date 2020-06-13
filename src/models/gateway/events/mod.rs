@@ -90,7 +90,11 @@ use crate::error::{PandaError, Result};
 use serde_json::Value;
 use std::convert::TryFrom;
 
-// TODO: JSON PARSE ERROR MACRO
+macro_rules! parse_dispatch {
+    ($event: expr, $name: expr) => {
+        serde_json::from_value($event).map_err(|_| PandaError::InvalidPayloadFormat($name))
+    };
+}
 
 #[derive(Debug)]
 pub(crate) enum Event {
@@ -157,10 +161,11 @@ impl TryFrom<Payload> for Event {
             Opcode::Dispatch => Ok(Event::Dispatch(handle_dispatch(p)?)),
             Opcode::Reconnect => Ok(Event::Reconnect),
             Opcode::InvalidSessionData => {
-                let d = p.d.ok_or_else(|| PandaError::InvalidPayloadFormat)?;
+                let d =
+                    p.d.ok_or_else(|| PandaError::InvalidPayloadFormat("INVALID SESSION DATA"))?;
                 let resumable = match d {
                     Value::Bool(v) => v,
-                    _ => return Err(PandaError::InvalidPayloadFormat),
+                    _ => return Err(PandaError::InvalidPayloadFormat("INVALID SESSION DATA")),
                 };
 
                 Ok(Event::InvalidSession(resumable))
@@ -170,7 +175,7 @@ impl TryFrom<Payload> for Event {
                 struct Hello {
                     heartbeat_interval: u64,
                 }
-                let d = p.d.ok_or_else(|| PandaError::InvalidPayloadFormat)?;
+                let d = p.d.ok_or_else(|| PandaError::InvalidPayloadFormat("HELLO"))?;
                 let hello: Hello = serde_json::from_value(d).unwrap();
 
                 Ok(Event::Hello(hello.heartbeat_interval))
@@ -183,149 +188,149 @@ impl TryFrom<Payload> for Event {
 
 ///
 fn handle_dispatch(p: Payload) -> Result<DispatchEvent> {
-    let d = p.d.ok_or_else(|| PandaError::InvalidPayloadFormat)?;
-    let t = p.t.ok_or_else(|| PandaError::InvalidPayloadFormat)?;
+    let d = p.d.ok_or_else(|| PandaError::InvalidPayloadFormat("D"))?;
+    let t = p.t.ok_or_else(|| PandaError::InvalidPayloadFormat("T"))?;
 
     match t.as_str() {
         "READY" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "READY")?;
             Ok(DispatchEvent::Ready(event))
         }
         "RESUMED" => Ok(DispatchEvent::Resumed),
         "RECONNECT" => Ok(DispatchEvent::Reconnect),
         // Channel
         "CHANNEL_CREATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "CHANNEL_CREATE")?;
             Ok(DispatchEvent::ChannelCreate(event))
         }
         "CHANNEL_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "CHANNEL_CREATE")?;
             Ok(DispatchEvent::ChannelUpdate(event))
         }
         "CHANNEL_DELETE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "CHANNEL_CREATE")?;
             Ok(DispatchEvent::ChannelDelete(event))
         }
         "CHANNEL_PINS_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "CHANNEL_PINS_UPDATE")?;
             Ok(DispatchEvent::ChannelPinsUpdate(event))
         }
 
         // Guild
         "GUILD_CREATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_CREATE")?;
             Ok(DispatchEvent::GuildCreate(event))
         }
         "GUILD_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_UPDATE")?;
             Ok(DispatchEvent::GuildUpdate(event))
         }
         "GUILD_DELETE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_DELETE")?;
             Ok(DispatchEvent::GuildDelete(event))
         }
         "GUILD_BAN_ADD" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_BAN_ADD")?;
             Ok(DispatchEvent::GuildBanAdd(event))
         }
         "GUILD_BAN_REMOVE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_BAN_REMOVE")?;
             Ok(DispatchEvent::GuildBanRemove(event))
         }
         "GUILD_EMOJIS_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_EMOJIS_UPDATE")?;
             Ok(DispatchEvent::GuildEmojisUpdate(event))
         }
         "GUILD_INTEGRATIONS_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_INTEGRATIONS_UPDATE")?;
             Ok(DispatchEvent::GuildIntegrationsUpdate(event))
         }
         "GUILD_MEMBER_ADD" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_MEMBER_ADD")?;
             Ok(DispatchEvent::GuildMemberAdd(event))
         }
         "GUILD_MEMBER_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_MEMBER_UPDATE")?;
             Ok(DispatchEvent::GuildMemberUpdate(event))
         }
         "GUILD_MEMBER_REMOVE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_MEMBER_REMOVE")?;
             Ok(DispatchEvent::GuildMemberRemove(event))
         }
         "GUILD_MEMBER_CHUNK" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_MEMBER_CHUNK")?;
             Ok(DispatchEvent::GuildMembersChunk(event))
         }
         "GUILD_ROLE_CREATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_ROLE_CREATE")?;
             Ok(DispatchEvent::GuildRoleCreate(event))
         }
         "GUILD_ROLE_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_ROLE_CREATE")?;
             Ok(DispatchEvent::GuildRoleUpdate(event))
         }
         "GUILD_ROLE_DELETE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "GUILD_ROLE_DELETE")?;
             Ok(DispatchEvent::GuildRoleDelete(event))
         }
 
         // Message
         "MESSAGE_CREATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "MESSAGE_CREATE")?;
             Ok(DispatchEvent::MessageCreate(event))
         }
         "MESSAGE_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "MESSAGE_UPDATE")?;
             Ok(DispatchEvent::MessageUpdate(event))
         }
         "MESSAGE_DELETE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "MESSAGE_DELETE")?;
             Ok(DispatchEvent::MessageDelete(event))
         }
         "MESSAGE_DELETE_BULK" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "MESSAGE_DELETE_BULK")?;
             Ok(DispatchEvent::MessageDeleteBulk(event))
         }
         "MESSAGE_REACTION_ADD" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "MESSAGE_REACTION_ADD")?;
             Ok(DispatchEvent::MessageReactionAdd(event))
         }
         "MESSAGE_REACTION_REMOVE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "MESSAGE_REACTION_REMOVE")?;
             Ok(DispatchEvent::MessageReactionRemove(event))
         }
         "MESSAGE_REACTION_REMOVE_ALL" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "MESSAGE_REACTION_REMOVE_ALL")?;
             Ok(DispatchEvent::MessageReactionRemoveAll(event))
         }
         "MESSAGE_REACTION_REMOVE_EMOJI" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "MESSAGE_REACTION_REMOVE_EMOJI")?;
             Ok(DispatchEvent::MessageReactionRemoveEmoji(event))
         }
 
         // Presence
         "PRESENCE_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "PRESENCE_UPDATE")?;
             Ok(DispatchEvent::PresenceUpdate(event))
         }
         "TYPING_START" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "TYPING_START")?;
             Ok(DispatchEvent::TypingStart(event))
         }
         "USER_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "USER_UPDATE")?;
             Ok(DispatchEvent::UserUpdate(event))
         }
 
         // Voice
         "VOICE_STATE_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "VOICE_STATE_UPDATE")?;
             Ok(DispatchEvent::VoiceStateUpdate(event))
         }
         "VOICE_SERVER_UPDATE" => {
-            let event = serde_json::from_value(d)?;
+            let event = parse_dispatch!(d, "VOICE_SERVER_UPDATE")?;
             Ok(DispatchEvent::VoiceServerUpdate(event))
         }
-        _ => Err(PandaError::InvalidPayloadFormat),
+        _ => Err(PandaError::InvalidPayloadFormat("Unkown D event")),
     }
 }
