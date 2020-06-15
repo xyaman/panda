@@ -66,6 +66,8 @@ define_cfg! {
     #[doc(inline)]
     pub mod client;
     #[doc(inline)]
+    pub mod commands;
+    #[doc(inline)]
     pub mod models;
     #[doc(inline)]
     pub mod utils;
