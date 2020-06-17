@@ -24,7 +24,7 @@
 //! # Example usage
 //! It will print the bot name when the bot is ready.
 //!
-//! ```rust
+//! ```rust,should_panic
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!

@@ -73,3 +73,8 @@ required-features = ["tokio/macros"]
 [[example]]
 name = "status"
 required-features = ["tokio/macros"]
+
+[dev-dependencies.tokio]
+version = "0.2.21"
+features = ["macros", "rt-threaded"]
+
