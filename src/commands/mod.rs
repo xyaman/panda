@@ -20,13 +20,38 @@
 //!
 //! `arguments` is some text passed to the command to work on it. Arguments are optional and
 //! separated from `command` by a whitespace.
+//!
+//! # Example
+//! ```
+//! use std::sync::Arc;
+//!
+//! use panda::client::SessionData;
+//! use panda::commands::{Command, CommandResult, CommandsIndex};
+//! use panda::models::channel::Message;
+//!
+//! async fn pong(session: Arc<SessionData<()>>, msg: Message) -> CommandResult {
+//!     msg.send(&session.http, "Pong").await?;
+//!     Ok(())
+//! }
+//!
+//! #[tokio::main]
+//! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     let mut index = CommandsIndex::new("?");
+//!     index.command("ping", Command::new(pong));
+//!
+//!     let mut bot = panda::new("your token here");
+//!
+//!     Ok(())
+//! }
+//! ```
 
+use std::future::Future;
 use std::sync::Arc;
 
 use futures::future::BoxFuture;
 
 use crate::models::channel::Message;
-use crate::Session;
+use crate::client::SessionData;
 
 
 /// The built-in command type
@@ -38,18 +63,36 @@ impl<S> Command<S> {
     /// Creates a new [`Command`] from a callback
     ///
     /// [`Command`]: ./struct.Command.html
-    pub fn new(callback: Box<CommandCallback<S>>) -> Self {
+    pub fn new<F, Fut>(callback: F) -> Self
+    where
+        F: Send + Sync + 'static,
+        F: Fn(Arc<SessionData<S>>, Message) -> Fut,
+        Fut: Send + 'static,
+        Fut: Future<Output = CommandResult>,
+    {
+        let pinned = move |session, msg| -> BoxFuture<'static, CommandResult> {
+            Box::pin(callback(session, msg))
+        };
+
         Self {
-            callback,
+            callback: Box::new(pinned),
         }
+    }
+
+    /// Runs `self`
+    pub async fn run(&self, session: Arc<SessionData<S>>, message: Message) -> CommandResult {
+        (self.callback)(session, message).await
     }
 }
 
 /// The type of the callback accepted by [`crate::commands::Command`]
-type CommandCallback<S> = dyn Fn(Arc<Session<S>>, Message) -> BoxFuture<'static, CommandResult> + Send + Sync;
+type CommandCallback<S> = dyn Fn(Arc<SessionData<S>>, Message) -> BoxFuture<'static, CommandResult> + Send + Sync;
 
 /// The result returned by a [`Command`] when run
 ///
 /// [`Command`]: ../commands/struct.Command.html
 pub type CommandResult = Result<(), Box<dyn std::error::Error>>;
 
+mod index;
+#[doc(inline)]
+pub use index::CommandsIndex;
