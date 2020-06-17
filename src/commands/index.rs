@@ -7,6 +7,34 @@ use std::collections::HashMap;
 use super::Command;
 
 /// The handler for all the commands
+///
+/// Handles parsing and stores commands callbacks
+///
+/// # Example
+/// ```
+/// use std::sync::Arc;
+///
+/// use panda::client::SessionData;
+/// use panda::commands::{Command, CommandResult, CommandsIndex};
+/// use panda::models::channel::Message;
+///
+/// async fn pong(session: Arc<SessionData<()>>, msg: Message) -> CommandResult {
+///     msg.send(&session.http, "Pong").await?;
+///     Ok(())
+/// }
+///
+/// let mut index = CommandsIndex::new("?");
+/// index.command("ping", Command::new(pong));
+///
+/// // The user typed `!ping` (the prefix is wrong)
+/// assert!(index.parse("!ping").is_none());
+///
+/// // The user typed `?pong` (the command name is wrong)
+/// assert!(index.parse("?pong").is_none());
+///
+/// // The user typed `?ping` (good command invocation)
+/// assert!(index.parse("?ping").is_some());
+/// ```
 pub struct CommandsIndex<S> {
     commands: HashMap<String, Command<S>>,
     prefix: String,
@@ -41,6 +69,21 @@ impl<S> CommandsIndex<S> {
 
         self.commands.insert(name, command);
         Ok(())
+    }
+
+    /// Parses a command sent by the user. Returns the [`Command`] to call or `None`
+    ///
+    /// [`Command`]: ../struct.Command.html
+    pub fn parse(&self, command: &str) -> Option<&Command<S>> {
+        if !command.starts_with(&self.prefix) {
+            // There isn't anything to do
+            return None;
+        }
+        let command = &command[self.prefix.len()..];
+
+        let whitespace = command.find(char::is_whitespace).unwrap_or(command.len());
+        let command_name = String::from(&command[..whitespace]);
+        self.commands.get(&command_name)
     }
 }
 
