@@ -3,40 +3,14 @@
 //! [`CommandsIndex`]: ./struct.CommandsIndex.html
 
 use std::collections::HashMap;
+use std::error::Error;
+use std::sync::Arc;
 
+use crate::client::SessionData;
+use crate::models::events::MessageCreate;
 use super::Command;
 
-/// The handler for all the commands
-///
-/// Handles parsing and stores commands callbacks
-///
-/// # Example
-/// ```
-/// use std::sync::Arc;
-///
-/// use panda::client::SessionData;
-/// use panda::commands::{Command, CommandResult, CommandsIndex};
-/// use panda::models::channel::Message;
-///
-/// async fn ping(session: Arc<SessionData<()>>, msg: Message) -> CommandResult {
-///     msg.send(&session.http, "Pong").await?;
-///     Ok(())
-/// }
-///
-/// // Defining a `CommandsIndex`. We tell to panda we need a bot using the `?` prefix and a `ping`
-/// // command to run the function `ping`
-/// let mut index = CommandsIndex::new("?");
-/// index.command("ping", Command::new(ping)).unwrap();
-///
-/// // The user typed `!ping` (the prefix is wrong)
-/// assert!(index.parse("!ping").is_none());
-///
-/// // The user typed `?pong` (the command name is wrong)
-/// assert!(index.parse("?pong").is_none());
-///
-/// // The user typed `?ping` (good command invocation)
-/// assert!(index.parse("?ping").is_some());
-/// ```
+/// The handler for all the commands. Handles parsing and stores commands callbacks
 ///
 /// The [module-level documentation] shows how to create a bot using commands
 ///
@@ -79,10 +53,11 @@ impl<S> CommandsIndex<S> {
         Ok(())
     }
 
-    /// Parses a command sent by the user. Returns the [`Command`] to call or `None`
+    /// Parses a command sent by the user. Returns the [`Command`] to call with its arguments or
+    /// `None`
     ///
     /// [`Command`]: ./struct.Command.html
-    pub fn parse(&self, command: &str) -> Option<&Command<S>> {
+    fn parse(&self, command: &str) -> Option<(&Command<S>, String)> {
         if !command.starts_with(&self.prefix) {
             // There isn't anything to do
             return None;
@@ -91,7 +66,43 @@ impl<S> CommandsIndex<S> {
 
         let whitespace = command.find(char::is_whitespace).unwrap_or(command.len());
         let command_name = String::from(&command[..whitespace]);
-        self.commands.get(&command_name)
+        let args = if whitespace + 1 >= command.len() {
+            String::new()
+        } else {
+            String::from(&command[whitespace + 1..])
+        };
+
+        let command = self.commands.get(&command_name)?;
+        Some((command, args))
     }
 }
+
+/// A shorthand function to easily create a handler to plug a [`CommandsIndex`] in a [`Client`]
+///
+/// # Usage
+/// Don't use it directly but use it through the macro [`make_commands_handler`]
+///
+/// [`CommandsIndex`]: ./struct.CommandsIndex.html
+/// [`make_commands_handler`]: ../macro.make_commands_handler.html
+pub async fn handle_commands<S>(index: Arc<CommandsIndex<S>>, session: Arc<SessionData<S>>, event: MessageCreate) -> Result<(), Box<dyn Error>> {
+    let (command, args) = match index.parse(&event.content) {
+        Some(val) => val,
+        // There isn't any command invocation
+        None      => return Ok(()),
+    };
+
+    command.run(session, event.0, args).await
+}
+
+/// Generates a closure to automate the parsing of commands sent to the bot
+#[macro_export]
+macro_rules! make_commands_handler(
+    ($index: expr) => ({
+        let index = std::sync::Arc::new($index);
+
+        move |session, event| {
+            $crate::commands::handle_commands(index.clone(), session, event)
+        }
+    })
+);
 

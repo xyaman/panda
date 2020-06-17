@@ -27,22 +27,12 @@
 //!
 //! use panda::client::SessionData;
 //! use panda::commands::{Command, CommandResult, CommandsIndex};
+//! use panda::make_commands_handler;
 //! use panda::models::channel::Message;
 //!
-//! async fn ping(session: Arc<SessionData<()>>, msg: Message) -> CommandResult {
+//! async fn ping(session: Arc<SessionData<()>>, msg: Message, _args: String) -> CommandResult {
 //!     msg.send(&session.http, "Pong").await?;
 //!     Ok(())
-//! }
-//!
-//! /// Handles the MessageCreate event by calling the good command
-//! async fn handler(index: Arc<CommandsIndex<()>>, session: Arc<SessionData<()>>, msg: Message) ->
-//! Result<(), Box<dyn std::error::Error>> {
-//!     let cmd = match index.parse(&msg.content) {
-//!         Some(val) => val,
-//!         None      => return Ok(()),
-//!     };
-//!
-//!     cmd.run(session, msg).await
 //! }
 //!
 //! #[tokio::main]
@@ -52,15 +42,10 @@
 //!     let mut index = CommandsIndex::new("?");
 //!     index.command("ping", Command::new(ping)).unwrap();
 //!
-//!     // We wrap it in an `Arc` for lifetimes reasons
-//!     let index = Arc::new(index);
-//!
 //!     // And then, we create the bot and an event handler for the event `MessageCreate` which
 //!     // runs the requested commands
 //!     let mut bot = panda::new("your token here").await.unwrap();
-//!     bot.on_message_create(move |session, event| {
-//!         handler(index.clone(), session, event.0)
-//!     });
+//!     bot.on_message_create(make_commands_handler!(index));
 //!
 //!     // The last step is to start the newly created bot !
 //!     bot.start().await.unwrap();
@@ -90,12 +75,12 @@ impl<S> Command<S> {
     pub fn new<F, Fut>(callback: F) -> Self
     where
         F: Send + Sync + 'static,
-        F: Fn(Arc<SessionData<S>>, Message) -> Fut,
+        F: Fn(Arc<SessionData<S>>, Message, String) -> Fut,
         Fut: Send + 'static,
         Fut: Future<Output = CommandResult>,
     {
-        let pinned = move |session, msg| -> BoxFuture<'static, CommandResult> {
-            Box::pin(callback(session, msg))
+        let pinned = move |session, msg, args| -> BoxFuture<'static, CommandResult> {
+            Box::pin(callback(session, msg, args))
         };
 
         Self {
@@ -104,13 +89,13 @@ impl<S> Command<S> {
     }
 
     /// Runs `self`
-    pub async fn run(&self, session: Arc<SessionData<S>>, message: Message) -> CommandResult {
-        (self.callback)(session, message).await
+    pub async fn run(&self, session: Arc<SessionData<S>>, message: Message, args: String) -> CommandResult {
+        (self.callback)(session, message, args).await
     }
 }
 
 /// The type of the callback accepted by [`crate::commands::Command`]
-type CommandCallback<S> = dyn Fn(Arc<SessionData<S>>, Message) -> BoxFuture<'static, CommandResult> + Send + Sync;
+type CommandCallback<S> = dyn Fn(Arc<SessionData<S>>, Message, String) -> BoxFuture<'static, CommandResult> + Send + Sync;
 
 /// The result returned by a [`Command`] when run
 ///
@@ -119,4 +104,5 @@ pub type CommandResult = Result<(), Box<dyn std::error::Error>>;
 
 mod index;
 #[doc(inline)]
-pub use index::CommandsIndex;
+pub use index::{CommandsIndex, handle_commands};
+
