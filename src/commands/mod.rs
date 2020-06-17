@@ -22,18 +22,19 @@
 //! separated from `command` by a whitespace.
 //!
 //! # Example
-//! ```
+//! ```rust,should_panic
 //! use std::sync::Arc;
 //!
 //! use panda::client::SessionData;
 //! use panda::commands::{Command, CommandResult, CommandsIndex};
 //! use panda::models::channel::Message;
 //!
-//! async fn pong(session: Arc<SessionData<()>>, msg: Message) -> CommandResult {
+//! async fn ping(session: Arc<SessionData<()>>, msg: Message) -> CommandResult {
 //!     msg.send(&session.http, "Pong").await?;
 //!     Ok(())
 //! }
 //!
+//! /// Handles the MessageCreate event by calling the good command
 //! async fn handler(index: Arc<CommandsIndex<()>>, session: Arc<SessionData<()>>, msg: Message) ->
 //! Result<(), Box<dyn std::error::Error>> {
 //!     let cmd = match index.parse(&msg.content) {
@@ -46,16 +47,23 @@
 //!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
+//!     // We create a new CommandsIndex to tell panda we need a bot using the prefix `?` and the
+//!     // defining the command `ping` which calls the async function `ping`
 //!     let mut index = CommandsIndex::new("?");
-//!     index.command("ping", Command::new(pong));
+//!     index.command("ping", Command::new(ping)).unwrap();
+//!
+//!     // We wrap it in an `Arc` for lifetimes reasons
 //!     let index = Arc::new(index);
 //!
+//!     // And then, we create the bot and an event handler for the event `MessageCreate` which
+//!     // runs the requested commands
 //!     let mut bot = panda::new("your token here").await.unwrap();
 //!     bot.on_message_create(move |session, event| {
 //!         handler(index.clone(), session, event.0)
 //!     });
 //!
-//!     bot.start().await;
+//!     // The last step is to start the newly created bot !
+//!     bot.start().await.unwrap();
 //!
 //!     Ok(())
 //! }
