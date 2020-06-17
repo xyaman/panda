@@ -34,12 +34,28 @@
 //!     Ok(())
 //! }
 //!
+//! async fn handler(index: Arc<CommandsIndex<()>>, session: Arc<SessionData<()>>, msg: Message) ->
+//! Result<(), Box<dyn std::error::Error>> {
+//!     let cmd = match index.parse(&msg.content) {
+//!         Some(val) => val,
+//!         None      => return Ok(()),
+//!     };
+//!
+//!     cmd.run(session, msg).await
+//! }
+//!
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!     let mut index = CommandsIndex::new("?");
 //!     index.command("ping", Command::new(pong));
+//!     let index = Arc::new(index);
 //!
-//!     let mut bot = panda::new("your token here");
+//!     let mut bot = panda::new("your token here").await.unwrap();
+//!     bot.on_message_create(move |session, event| {
+//!         handler(index.clone(), session, event.0)
+//!     });
+//!
+//!     bot.start().await;
 //!
 //!     Ok(())
 //! }
