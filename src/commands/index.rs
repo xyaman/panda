@@ -53,11 +53,12 @@ impl<S> CommandsIndex<S> {
         Ok(())
     }
 
+    // pub(crate) required for unit-tests
     /// Parses a command sent by the user. Returns the [`Command`] to call with its arguments or
     /// `None`
     ///
     /// [`Command`]: ./struct.Command.html
-    fn parse(&self, command: &str) -> Option<(&Command<S>, String)> {
+    pub(crate) fn parse(&self, command: &str) -> Option<(&Command<S>, String)> {
         if !command.starts_with(&self.prefix) {
             // There isn't anything to do
             return None;

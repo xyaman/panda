@@ -106,3 +106,6 @@ mod index;
 #[doc(inline)]
 pub use index::{CommandsIndex, handle_commands};
 
+#[cfg(test)]
+mod tests;
+
