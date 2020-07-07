@@ -12,6 +12,9 @@ macro_rules! bucket_key {
     (emoji: $id: expr) => {
         format!("emoji:{}", $id.as_ref());
     };
+    (webhook: $id: expr) => {
+        format!("webhooks:{}", $id.as_ref());
+    };
 }
 
 macro_rules! api_request {
@@ -322,6 +325,20 @@ impl Route<()> {
             body: (),
         }
     }
+
+    pub(crate) fn delete_webhook(webhook_id: impl AsRef<str>) -> Self {
+        let method = Method::DELETE;
+        let uri = api_request!("/webhooks/{}", webhook_id.as_ref());
+
+        let bucket_key = bucket_key!(webhook: webhook_id);
+
+        Route {
+            method,
+            uri,
+            bucket_key,
+            body: (),
+        }
+    }
 }
 
 // Routes with body
@@ -446,6 +463,38 @@ impl<B: Into<Body>> Route<B> {
     //         body,
     //     }
     // }
+
+    pub(crate) fn create_webhook(channel_id: impl AsRef<str>, body: B) -> Self {
+        let method = Method::POST;
+        let uri = api_request!("/channels/{}/webhooks", channel_id.as_ref());
+
+        let bucket_key = bucket_key!(channel: channel_id);
+
+        Route {
+            method,
+            uri,
+            bucket_key,
+            body,
+        }
+    }
+
+    pub(crate) fn execute_webhook(
+        webhook_id: impl AsRef<str>,
+        token: impl AsRef<str>,
+        body: B
+    ) -> Self {
+        let method = Method::POST;
+        let uri = api_request!("/webhooks/{}/{}", webhook_id.as_ref(), token.as_ref());
+
+        let bucket_key = bucket_key!(webhook: webhook_id);
+
+        Route {
+            method,
+            uri,
+            bucket_key,
+            body,
+        }
+    }
 }
 
 /// Used to encode emoji as a valid char in URL

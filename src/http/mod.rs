@@ -9,6 +9,7 @@ use crate::{
     models::{
         channel::{Channel, Embed, Message},
         user::User,
+        webhook::{Webhook, ExecuteWebhook},
     },
 };
 
@@ -427,8 +428,6 @@ impl HttpClient {
         let route = Route::get_channel_invite(channel_id);
         let res = self._make_request(route).await?;
 
-        dbg!(res);
-
         Ok(())
     }
     // // pub async fn create_channel_invite() {}
@@ -488,4 +487,56 @@ impl HttpClient {
     // PUT/channels/{channel.id}/recipients/{user.id}
 
     // DELETE/channels/{channel.id}/recipients/{user.id}
+
+    /// Creates a new webook, and returns the [`Webhook`]. For the format of the avatar data, see
+    /// [the Discord API docs](https://discord.com/developers/docs/reference#image-data).
+    ///
+    /// [`Webhook`]: ../../panda/models/webhook/struct.Webhook.html
+    pub async fn create_webhook(
+        &self,
+        channel_id: impl AsRef<str>,
+        name: impl AsRef<str>,
+        avatar_data: Option<impl AsRef<str>>
+    ) -> Result<Webhook> {
+        // Create body
+        let body = match avatar_data {
+            Some(data) => serde_json::json!({ "name": name.as_ref(), "avatar": data.as_ref() }),
+            None => serde_json::json!({ "name": name.as_ref() }),
+        };
+
+        // Parse to a valid Body, isahc::Body
+        let body = serde_json::to_string(&body)?;
+
+        // Create route
+        let route = Route::create_webhook(channel_id, body);
+        let mut res = self._make_request(route).await?;
+        Ok(res.json()?)
+    }
+
+    /// Deletes a webhook.
+    pub async fn delete_webhook(&self, webhook_id: impl AsRef<str>) -> Result<()> {
+        // Create route
+        let route = Route::delete_webhook(webhook_id);
+        if self._make_request(route).await?.status() == StatusCode::NO_CONTENT {
+            Ok(())
+        } else {
+            Err(PandaError::InvalidWebhook)
+        }
+    }
+
+    /// Executes a webhook with the given parameters.
+    pub async fn execute_webhook(
+        &self,
+        webhook_id: impl AsRef<str>,
+        token: impl AsRef<str>,
+        params: ExecuteWebhook
+    ) -> Result<()> {
+        // Parse to a valid Body, isahc::Body
+        let body = serde_json::to_string(&params)?;
+
+        // Create route
+        let route = Route::execute_webhook(webhook_id, token, body);
+        let _ = self._make_request(route).await?;
+        Ok(())
+    }
 }

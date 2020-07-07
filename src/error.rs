@@ -76,6 +76,9 @@ pub enum PandaError {
     /// tungstenite
     TungsteniteError(TungsteniteError),
 
+    /// An invalid webhook id was given
+    InvalidWebhook,
+
     RuntimeError,
 }
 
@@ -102,6 +105,7 @@ impl fmt::Display for PandaError {
             Self::TungsteniteError(e) => write!(f, "Tungstenite Error: {}", e),
             Self::UnknownOpcodeSent => write!(f, "panda sent an invalid Opcode, please report the bug"),
             Self::InvalidDecodeSent => write!(f, "panda sent an invalid payload, please report the bug"),
+            Self::InvalidWebhook => write!(f, "invalid webhook id"),
             Self::RuntimeError => write!(f, "runtime error")
         }
     }

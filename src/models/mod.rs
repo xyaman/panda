@@ -16,6 +16,8 @@ pub mod user;
 pub mod voice;
 #[doc(inline)]
 pub mod invite;
+#[doc(inline)]
+pub mod webhook;
 
 // Re-export all models
 pub use channel::*;
@@ -25,3 +27,4 @@ pub use guild::*;
 pub use user::*;
 pub use voice::*;
 pub use invite::*;
+pub use webhook::*;
