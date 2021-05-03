@@ -3,6 +3,7 @@ use crate::error::PandaError;
 
 use std::{convert::TryFrom, io::Read};
 
+use async_tungstenite::tungstenite::protocol::frame::coding::CloseCode;
 use async_tungstenite::tungstenite::Message as TungsteniteMessage;
 use flate2::read::ZlibDecoder;
 
@@ -47,7 +48,9 @@ impl TryFrom<TungsteniteMessage> for Payload {
     fn try_from(value: TungsteniteMessage) -> Result<Payload, Self::Error> {
         let payload = match value {
             // Normal text
-            TungsteniteMessage::Text(v) => serde_json::from_str(&v).map_err(|_| PandaError::UnknownPayloadReceived)?,
+            TungsteniteMessage::Text(v) => {
+                serde_json::from_str(&v).map_err(|_| PandaError::UnknownPayloadReceived)?
+            }
 
             // Compressed Text
             TungsteniteMessage::Binary(v) => {
@@ -67,25 +70,31 @@ impl TryFrom<TungsteniteMessage> for Payload {
 
                 // Get the code as a u16
                 // https://discordapp.com/developers/docs/topics/opcodes-and-status-codes#gateway-gateway-close-event-codes
-                let code: u16 = reason.code.into();
-
-                match code {
-                    4000 => return Err(PandaError::ConnectionClosed),
-                    4001 => return Err(PandaError::UnknownOpcodeSent),
-                    4002 => return Err(PandaError::InvalidDecodeSent),
-                    // 4003 => this shouldn't happen
-                    4004 => return Err(PandaError::AuthenticationFailed),
-                    // 4005 => this shouldn't happen
-                    4007 => {
-                        log::error!("Panda error: Invalid seq sended");
-                        return Err(PandaError::ConnectionClosed);
+                if !reason.code.is_allowed() {
+                    panic!("UNALLOWED Close error received")
+                }
+                match reason.code {
+                    CloseCode::Library(code) => {
+                        match code {
+                            4000 => return Err(PandaError::ConnectionClosed),
+                            4001 => return Err(PandaError::UnknownOpcodeSent),
+                            4002 => return Err(PandaError::InvalidDecodeSent),
+                            // 4003 => this shouldn't happen
+                            4004 => return Err(PandaError::AuthenticationFailed),
+                            // 4005 => this shouldn't happen
+                            4007 => {
+                                log::error!("Panda error: Invalid seq sended");
+                                return Err(PandaError::ConnectionClosed);
+                            }
+                            4008 => return Err(PandaError::ConnectionClosed), // TODO: Improve this
+                            4009 => return Err(PandaError::ConnectionClosed), // TODO: Improve this
+                            4010 => return Err(PandaError::InvalidShard),
+                            4011 => return Err(PandaError::ShardingRequired),
+                            4012 => return Err(PandaError::InvalidApiGatewayVersion),
+                            _ => panic!("UNDEFINED Close error received: {}", code),
+                        }
                     }
-                    4008 => return Err(PandaError::ConnectionClosed), // TODO: Improve this
-                    4009 => return Err(PandaError::ConnectionClosed), // TODO: Improve this
-                    4010 => return Err(PandaError::InvalidShard),
-                    4011 => return Err(PandaError::ShardingRequired),
-                    4012 => return Err(PandaError::InvalidApiGatewayVersion),
-                    _ => panic!("UNDEFINED Close error received"),
+                    _ => return Err(PandaError::ConnectionClosed),
                 }
             }
             _ => todo!(),
