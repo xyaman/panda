@@ -38,7 +38,7 @@ impl GatewayConnection {
         // Connect to the discord gateway through a websocket
         //let (ws, _) = connect_async(url).await.map_err(|_| PandaError::CantConnectToGateway)?;
 
-        let (ws, _) = connect_async(url).await.expect("Can't connect to gateway");
+        let (ws, _) = connect_async(url).await?;
 
         // Spawn gateway process manager
         let (to_client, mut from_gateway) = mpsc::unbounded();
