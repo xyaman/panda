@@ -84,7 +84,7 @@ impl GatewayConnection {
             log::error!("Disconnected from the gateway, starting reconnect...");
             match GatewayConnection::new().await {
                 Ok(g) => {
-                    std::mem::replace(self, g);
+                    *self = g;
                     log::info!("Connected succesfully");
                     break;
                 }

@@ -27,7 +27,7 @@ futures = "0.3.5"
 isahc = { version = "0.9.3", features = ["json"] }
 
 flate2 = { version = "1.0.14", features = ["zlib"], default-features = false }
-url = "2.1.1"
+url = { version = "2.1.1", features = ["serde"] }
 log = "0.4.8"
 
 [dependencies.tokio]
