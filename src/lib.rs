@@ -24,7 +24,7 @@
 //! # Example usage
 //! It will print the bot name when the bot is ready.
 //!
-//! ```rust
+//! ```rust,should_panic
 //! #[tokio::main]
 //! async fn main() -> Result<(), Box<dyn std::error::Error>> {
 //!
@@ -65,6 +65,8 @@ define_cfg! {
     // Modules
     #[doc(inline)]
     pub mod client;
+    #[doc(inline)]
+    pub mod commands;
     #[doc(inline)]
     pub mod models;
     #[doc(inline)]
